@@ -24,3 +24,10 @@
 - Real stop/restart retained a 23/1000 checkpoint, session and input hash, then completed1000 unique deterministic cases; record and repeatable script committed.
 - Refreshed actual screenshots and compiled Bicep locally. No paid call, external model acceptance, cloud deployment or hosted CI execution claimed.
 - Stopped audit stack without deleting volumes and removed only generated audit application images/cache to share limited disk with the other two audits. Original data/history preserved.
+
+## First-run documentation — 2026-11-05
+
+- Added a clone-to-DEMO route with healthcheck waiting, public local roles, exact UI actions, expected synthetic outcomes, persistence and troubleshooting.
+- Added `make quickcheck`, reusing five existing behavioral tests and forcing a disposable SQLite database. Verified five passing tests even when an unusable application-style `TEST_DATABASE_URL` was inherited; no external database or inference was used.
+- Verified frozen Python installation and the documented console entrypoint: reference export returned exit 0 with 60/60 deterministic cases approved. Compose configuration, Make command expansion and local documentation links validated.
+- Documented the full suite, Chromium installation, host-development PostgreSQL setup and credential-free LIVE review boundaries. No application source changed or Docker image rebuild was needed for these documentation/Makefile changes.
