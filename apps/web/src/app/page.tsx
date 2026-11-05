@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   api,
   Configuration,
@@ -149,7 +149,8 @@ export default function Home() {
     [error, setError] = useState(""),
     [notice, setNotice] = useState("");
   const [loginRole, setLoginRole] = useState("operator"),
-    [password, setPassword] = useState("demo-release");
+    [username, setUsername] = useState(""),
+    [password, setPassword] = useState("");
   const [tab, setTab] = useState<Tab>("runs"),
     [datasets, setDatasets] = useState<Dataset[]>([]),
     [configs, setConfigs] = useState<Configuration[]>([]),
@@ -190,6 +191,15 @@ export default function Home() {
     [approveOpen, setApproveOpen] = useState(false),
     [approveComment, setApproveComment] = useState("");
   const [filter, setFilter] = useState("all");
+  const modalError = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    // Action errors must be visible even after submitting a long mobile form.
+    // Background polling never sets error, so refreshes do not move keyboard focus.
+    if (error && modalError.current) {
+      modalError.current.focus({ preventScroll: true });
+      modalError.current.scrollIntoView({ block: "nearest" });
+    }
+  }, [error]);
   const operator = user?.role === "operator" || user?.role === "admin",
     reviewer = user?.role === "reviewer" || user?.role === "admin";
   const refresh = useCallback(async () => {
@@ -214,7 +224,14 @@ export default function Home() {
       api<User>("/auth/me"),
     ]).then(async ([s, u]) => {
       if (!active) return;
-      if (s.status === "fulfilled") setStatus(s.value);
+      if (s.status === "fulfilled" && ["DEMO", "LIVE"].includes(s.value.mode)) {
+        setStatus(s.value);
+        setPassword(s.value.mode === "DEMO" ? "demo-release" : "");
+      } else {
+        setError(
+          "Workspace mode could not be confirmed. Retry before signing in.",
+        );
+      }
       if (u.status === "fulfilled") {
         setUser(u.value);
         try {
@@ -260,11 +277,25 @@ export default function Home() {
   }
   async function login(e: React.FormEvent) {
     e.preventDefault();
+    if (!status || !["DEMO", "LIVE"].includes(status.mode)) return;
     await action(async () => {
       setUser(
-        await api<User>("/auth/login", { username: loginRole, password }),
+        await api<User>("/auth/login", {
+          username: status.mode === "DEMO" ? loginRole : username,
+          password,
+        }),
       );
       await refresh();
+    });
+  }
+  async function retryStatus() {
+    await action(async () => {
+      const next = await api<ModeStatus>("/status");
+      if (!["DEMO", "LIVE"].includes(next.mode)) {
+        throw new Error("Workspace mode could not be confirmed. Please retry.");
+      }
+      setStatus(next);
+      setPassword(next.mode === "DEMO" ? "demo-release" : "");
     });
   }
   async function openJob(id: string) {
@@ -409,7 +440,7 @@ export default function Home() {
       previous?.focus();
     };
   }, [dialogOpen, result?.case_id]);
-  const mode = status?.mode || "DEMO";
+  const mode = status?.mode || "UNKNOWN";
   if (booting)
     return (
       <div className="boot">
@@ -418,7 +449,7 @@ export default function Home() {
         <p>Opening your workspace…</p>
       </div>
     );
-  if (!user)
+  if (!user || mode === "UNKNOWN")
     return (
       <main className="login-page">
         <section className="login-story">
@@ -452,57 +483,95 @@ export default function Home() {
               <span>
                 {mode === "DEMO"
                   ? "No API key needed"
-                  : status?.live.ready
-                    ? "Provider configured"
-                    : "Provider configuration needed"}
+                  : mode === "UNKNOWN"
+                    ? "Connection verification needed"
+                    : status?.live.ready
+                      ? "Provider configured"
+                      : "Provider configuration needed"}
               </span>
             </div>
             <h2>Your release workspace</h2>
             <p className="muted">
-              Choose a demo role to explore the full evaluation workflow.
+              {mode === "DEMO"
+                ? "Choose a demo role to explore the full evaluation workflow."
+                : mode === "LIVE"
+                  ? "Sign in with your provisioned workspace account."
+                  : "The workspace mode must be verified before you sign in."}
             </p>
-            <form onSubmit={login}>
-              <label htmlFor="role">Workspace role</label>
-              <select
-                id="role"
-                value={loginRole}
-                onChange={(e) => setLoginRole(e.target.value)}
+            {error && (
+              <div className="alert error" role="alert">
+                {error}
+              </div>
+            )}
+            {mode === "UNKNOWN" ? (
+              <button
+                className="button primary full"
+                disabled={busy}
+                onClick={retryStatus}
               >
-                <option value="operator">
-                  Operator · datasets and evaluations
-                </option>
-                <option value="reviewer">
-                  Reviewer · corrections and approvals
-                </option>
-                <option value="viewer">Viewer · read-only access</option>
-              </select>
-              <label htmlFor="password">Demo password</label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoComplete="current-password"
-                required
-              />
-              <p className="field-hint">
-                Shared demo password: <code>demo-release</code>
-              </p>
-              {error && (
-                <div className="alert error" role="alert">
-                  {error}
-                </div>
-              )}
-              <button className="button primary full" disabled={busy}>
-                {busy ? "Opening workspace…" : "Enter workspace"}
-                <Icon name="arrow" />
+                {busy ? "Checking connection…" : "Retry connection"}
               </button>
-            </form>
+            ) : (
+              <form onSubmit={login}>
+                {mode === "DEMO" ? (
+                  <>
+                    <label htmlFor="role">Workspace role</label>
+                    <select
+                      id="role"
+                      value={loginRole}
+                      onChange={(e) => setLoginRole(e.target.value)}
+                    >
+                      <option value="operator">
+                        Operator · datasets and evaluations
+                      </option>
+                      <option value="reviewer">
+                        Reviewer · corrections and approvals
+                      </option>
+                      <option value="viewer">Viewer · read-only access</option>
+                    </select>
+                  </>
+                ) : (
+                  <>
+                    <label htmlFor="username">Username</label>
+                    <input
+                      id="username"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      autoComplete="username"
+                      required
+                    />
+                  </>
+                )}
+                <label htmlFor="password">
+                  {mode === "DEMO" ? "Demo password" : "Password"}
+                </label>
+                <input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="current-password"
+                  required
+                />
+                {mode === "DEMO" && (
+                  <p className="field-hint">
+                    Shared demo password: <code>demo-release</code>
+                  </p>
+                )}
+                <button className="button primary full" disabled={busy}>
+                  {busy ? "Opening workspace…" : "Enter workspace"}
+                  <Icon name="arrow" />
+                </button>
+              </form>
+            )}
             <div className="login-note">
               <Icon name="info" />
               <p>
-                Demo outputs are labeled fixtures. The database, evaluations,
-                permissions, and release rules execute for real.
+                {mode === "DEMO"
+                  ? "Demo outputs are labeled fixtures. The database, evaluations, permissions, and release rules execute for real."
+                  : mode === "LIVE"
+                    ? "LIVE requests use configured providers or registered endpoints. Imported outputs retain their provenance; provider failures never use demo fixtures."
+                    : "No credentials are requested until the server confirms its mode."}
               </p>
             </div>
           </div>
@@ -671,7 +740,7 @@ export default function Home() {
                 setNotice(
                   status?.live.ready
                     ? "LIVE configuration is ready; use the documented API or CLI for live execution."
-                    : `LIVE configuration pending: ${status?.live.missing.join(", ") || "provider configuration"}. Demo remains usable without credentials.`,
+                    : `LIVE configuration pending: ${status?.live.missing.join(", ") || "provider configuration"}. Imported outputs remain evaluable; LIVE never switches to demo fixtures.`,
                 );
               }}
             >
@@ -1043,8 +1112,8 @@ export default function Home() {
                   <div>
                     <h2>Compare evaluation runs</h2>
                     <p>
-                      Choose a reference and a candidate. Only matching case IDs
-                      are paired.
+                      Choose a reference and a candidate. Cases are paired only
+                      when their IDs and full case content match.
                     </p>
                   </div>
                   <Icon name="compare" size={26} />
@@ -1124,11 +1193,15 @@ export default function Home() {
                         <span className="mini-dot amber" />
                       </div>
                       <strong>
-                        {comparison.delta_pass_rate > 0 ? "+" : ""}
-                        {Math.round(comparison.delta_pass_rate * 100)}
-                        <span className="unit">pp</span>
+                        {comparison.delta_pass_rate === null
+                          ? "Pending"
+                          : `${comparison.delta_pass_rate > 0 ? "+" : ""}${Math.round(comparison.delta_pass_rate * 100)} pp`}
                       </strong>
-                      <small>Percentage point difference</small>
+                      <small>
+                        {comparison.pending_pairs
+                          ? `${comparison.pending_pairs} pairs lack completed evidence`
+                          : "Percentage point difference"}
+                      </small>
                     </div>
                     <div className="metric">
                       <div>
@@ -1137,13 +1210,50 @@ export default function Home() {
                       </div>
                       <strong>
                         {comparison.missing_baseline.length +
-                          comparison.missing_candidate.length}
+                          comparison.missing_candidate.length +
+                          comparison.incompatible_cases.length}
                       </strong>
                       <small>
                         {comparison.improvements.length} paired improvements
                       </small>
                     </div>
                   </div>
+                  {(comparison.incompatible_cases.length > 0 ||
+                    comparison.unprocessed_baseline.length > 0 ||
+                    comparison.unprocessed_candidate.length > 0 ||
+                    !comparison.same_evaluator ||
+                    !comparison.same_configuration) && (
+                    <section
+                      className="panel missing-panel"
+                      aria-label="Comparison limitations"
+                    >
+                      <h3>Comparison limitations</h3>
+                      <p>
+                        Changed case contracts excluded:{" "}
+                        {comparison.incompatible_cases.join(", ") || "None"}
+                      </p>
+                      <p>
+                        Not yet evaluated in baseline:{" "}
+                        {comparison.unprocessed_baseline.join(", ") || "None"}
+                      </p>
+                      <p>
+                        Not yet evaluated in candidate:{" "}
+                        {comparison.unprocessed_candidate.join(", ") || "None"}
+                      </p>
+                      {!comparison.same_evaluator && (
+                        <p>
+                          Evaluator versions differ. Interpret this comparison
+                          as exploratory.
+                        </p>
+                      )}
+                      {!comparison.same_configuration && (
+                        <p>
+                          Evaluation configurations differ. Inspect their
+                          versioned rules before interpreting changes.
+                        </p>
+                      )}
+                    </section>
+                  )}
                   <section className="panel">
                     <div className="section-heading">
                       <div>
@@ -1276,7 +1386,12 @@ export default function Home() {
               <Icon name="close" />
             </button>
             {error && (
-              <div className="alert error" role="alert">
+              <div
+                className="alert error"
+                role="alert"
+                ref={modalError}
+                tabIndex={-1}
+              >
                 {error}
               </div>
             )}
@@ -1383,7 +1498,7 @@ export default function Home() {
                         ? "No model call is made for fixture runs. Selecting an LLM-required policy can leave the gate inconclusive until that evaluation is available."
                         : status?.live.ready
                           ? "LIVE requests may incur provider charges. Check the selected configuration before starting."
-                          : `LIVE configuration is incomplete: ${status?.live.missing.join(", ")}. No calls can succeed until the provider is configured.`}
+                          : `LIVE configuration is incomplete: ${status?.live.missing.join(", ")}. Model execution needs credentials for the selected configuration. Authorized endpoint execution is checked separately.`}
                     </p>
                   </div>
                   <button

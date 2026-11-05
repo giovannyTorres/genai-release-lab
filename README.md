@@ -4,6 +4,8 @@ A working release-evaluation workbench for the fictional **Aster Systems** organ
 
 ![Actual paired comparison with synthetic fixture outputs](docs/screenshots/comparison-desktop.png)
 
+The current release-candidate review is documented in [the technical audit](docs/audit.md), including reproduced defects, fixes, installation evidence and remaining limitations.
+
 ## Run DEMO
 
 ```bash
@@ -20,19 +22,19 @@ The operator can version datasets/configurations, import JSON/JSONL outputs and 
 - Persistent queued/running/completed/failed/cancelled jobs. A separate worker leases jobs transactionally, persists each case, and resumes expired leases after restart. Cancel/retry preserves completed evidence.
 - Deterministic schema, citation, tool, argument and authorization evidence checks. The reference fixture yields 60/60; the deliberately changed fixture yields 30/60. These are fixture-validation results, **not model-quality measurements**.
 - Mandatory LLM evaluations without LIVE credentials remain pending and block release approval. No invented scores, usage or costs. Optional dated pricing applies only when token usage exists.
-- Paired comparisons expose missing cases and denominators. Human corrections are append-only and preserve automated gate evidence. Release approvals bind input and results hashes.
-- JSON, JUnit and self-contained HTML exports; offline CLI with explicit exit codes.
+- Paired comparisons require unchanged full case contracts, expose missing/incompatible/unprocessed cases and denominators, and leave the delta pending until evidence is complete. Human corrections are append-only and preserve automated gate evidence. Release approvals bind input and results hashes.
+- JSON, JUnit and self-contained HTML exports retain every expected case, including pending rows; offline CLI with explicit exit codes.
 - Real OpenAI Responses and Google Gemini SDK adapters with bounded requests, structured-output validation and transport-fixture tests. LIVE endpoint execution uses operator allowlists, public-IP pinning and redirect rejection.
 
-## Verified local-process fallback
+## Optional cached local-process launcher
 
-The final full-container rebuild was blocked by a managed-environment proxy outage (HTTP503 from PyPI and Docker Hub). With dependencies and the PostgreSQL image already cached in this workspace, the entire DEMO can also start with:
+The audit completed a fresh, uncached all-container rebuild and startup on a new volume; the earlier HTTP503 registry outage is historical. The managed workspace used the optional CA override documented in operations. With dependencies and the PostgreSQL image already cached, DEMO can alternatively start with:
 
 ```bash
 ./scripts/demo-local.sh
 ```
 
-This runs PostgreSQL through Compose and the API, durable worker and production Next server as local processes. It installs only from the existing frozen caches, and reports missing prerequisites explicitly. If starting on a new machine with working networking, prime caches with `uv sync --frozen`, `cd apps/web && npm ci`, and `docker pull postgres:17.6-bookworm` first. Ports3103/8103/5543 must be free. Ctrl+C stops application processes; database data persists. Logs are in ignored `.run/`. The standard all-container command above remains the intended portable deployment path; see precise verification status below.
+This runs PostgreSQL through Compose and the API, durable worker and production Next server as local processes. It installs only from the existing frozen caches, and reports missing prerequisites explicitly. If starting on a new machine with working networking, prime caches with `uv sync --frozen`, `cd apps/web && npm ci`, and `docker pull postgres:17.6-bookworm` first. Ports3103/8103/5543 must be free. Ctrl+C stops application processes; database data persists. Logs are in ignored `.run/`. The standard all-container command above is the portable path verified by the current audit. The alternative script was inspected for its cache prerequisites, backend-secret isolation and child-process supervision; its earlier successful execution is historical, not additional evidence of a clean container build.
 
 ## Local development and checks
 
@@ -55,7 +57,7 @@ make lint types test build
 cd apps/web && npm run test:e2e
 ```
 
-Tests default to a disposable SQLite database for fast domain tests; run the same tests against a **dedicated disposable PostgreSQL** database by setting `DATABASE_URL`. Tests recreate schema. CI uses PostgreSQL and includes the expected rejected gate as a successful assertion, plus browser workflows. The application itself defaults to PostgreSQL. OpenAPI: `/api/docs` and `/api/openapi.json` through the same-origin frontend.
+Tests default to a disposable SQLite database for fast domain tests; run the same tests against a **dedicated disposable PostgreSQL** database with `TEST_DATABASE_URL` pointing to a database whose name ends `_test`. Ordinary `DATABASE_URL` is deliberately ignored by the test harness. Tests recreate only their dedicated schema. CI uses PostgreSQL and includes the expected rejected gate as a successful assertion, plus browser workflows. The application itself defaults to PostgreSQL. OpenAPI: `/api/docs` and `/api/openapi.json` through the same-origin frontend.
 
 ```bash
 uv run release-lab --dataset fixtures/cases.json --outputs fixtures/reference.json --export /tmp/reference.json

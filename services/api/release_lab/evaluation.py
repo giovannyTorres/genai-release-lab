@@ -2,14 +2,17 @@
 
 import hashlib
 import json
+import re
 from pydantic import ValidationError
 from .schemas import Case, Output
 
-EVALUATOR_VERSION = "deterministic-1.0.0"
+EVALUATOR_VERSION = "deterministic-1.1.0"
 
 
 def digest(value):
-    return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+    return hashlib.sha256(
+        json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
+    ).hexdigest()
 
 
 def check(ok, detail):
@@ -52,7 +55,10 @@ def evaluate(case: dict, raw: dict | None):
             checks["abstention"] = check(output.answer == expected["answer"], "Expected explicit abstention")
         else:
             checks["answer"] = check(
-                all(x.casefold() in output.answer.casefold() for x in expected.get("answer_contains", [])),
+                all(
+                    re.search(r"(?<!\w)" + re.escape(x) + r"(?!\w)", output.answer, re.IGNORECASE) is not None
+                    for x in expected.get("answer_contains", [])
+                ),
                 "Required fixture facts present; this is not a semantic model-quality score",
             )
     if case.kind == "agent":
@@ -61,7 +67,9 @@ def evaluate(case: dict, raw: dict | None):
         checks["tools"] = check(
             [x["name"] for x in actual] == [x["name"] for x in expected_calls], "Expected ordered tool names"
         )
-        checks["arguments"] = check(actual == expected_calls, "Exact typed arguments and tool sequence")
+        checks["arguments"] = check(
+            digest(actual) == digest(expected_calls), "Exact typed arguments and tool sequence"
+        )
         if expected.get("authorization_required"):
             auth = output.authorization
             if not auth or auth.evidence_source != "backend_trace":
@@ -84,7 +92,9 @@ def evaluate(case: dict, raw: dict | None):
         "split": case.split,
         "status": status,
         "checks": checks,
-        "output": raw,
+        "output": output.model_dump(),
+        "usage_tokens": output.tokens,
+        "case_hash": digest(case.model_dump()),
         "expected": expected,
     }
 
@@ -115,31 +125,63 @@ def summarize(results, threshold=1.0, total=None):
     }
 
 
-def compare(baseline, candidate):
+def compare(baseline, candidate, baseline_cases=None, candidate_cases=None):
+    """Pair only identical versioned case contracts; disclose unprocessed records."""
     left = {r["case_id"]: r for r in baseline}
     right = {r["case_id"]: r for r in candidate}
-    paired = sorted(left.keys() & right.keys())
+    invalid_cases = set()
+
+    def validated_inventory(cases):
+        result = {}
+        for case in cases or []:
+            try:
+                result[case["id"]] = Case.model_validate(case).model_dump()
+            except ValidationError:
+                invalid_cases.add(case["id"])
+                result[case["id"]] = case
+        return result
+
+    left_cases = validated_inventory(baseline_cases)
+    right_cases = validated_inventory(candidate_cases)
+    left_ids = set(left_cases) if baseline_cases is not None else set(left)
+    right_ids = set(right_cases) if candidate_cases is not None else set(right)
+    common = left_ids & right_ids
+    incompatible = sorted(
+        k
+        for k in common
+        if k in invalid_cases
+        or (left_cases and right_cases and digest(left_cases[k]) != digest(right_cases[k]))
+    )
+    paired = sorted(common - set(incompatible))
+
+    def status(rows, key):
+        return rows.get(key, {}).get("status", "pending")
+
     return {
         "paired": len(paired),
-        "total_baseline": len(left),
-        "total_candidate": len(right),
-        "missing_baseline": sorted(right.keys() - left.keys()),
-        "missing_candidate": sorted(left.keys() - right.keys()),
+        "total_baseline": len(left_ids),
+        "total_candidate": len(right_ids),
+        "missing_baseline": sorted(right_ids - left_ids),
+        "missing_candidate": sorted(left_ids - right_ids),
+        "unprocessed_baseline": sorted(left_ids - set(left)),
+        "unprocessed_candidate": sorted(right_ids - set(right)),
+        "incompatible_cases": incompatible,
+        "pending_pairs": sum(status(left, k) == "pending" or status(right, k) == "pending" for k in paired),
         "regressions": [
-            {"case_id": k, "baseline": left[k]["status"], "candidate": right[k]["status"]}
+            {"case_id": k, "baseline": status(left, k), "candidate": status(right, k)}
             for k in paired
-            if left[k]["status"] == "pass" and right[k]["status"] != "pass"
+            if status(left, k) == "pass" and status(right, k) == "fail"
         ],
         "improvements": [
-            {"case_id": k, "baseline": left[k]["status"], "candidate": right[k]["status"]}
+            {"case_id": k, "baseline": status(left, k), "candidate": status(right, k)}
             for k in paired
-            if left[k]["status"] != "pass" and right[k]["status"] == "pass"
+            if status(left, k) == "fail" and status(right, k) == "pass"
         ],
+        # A missing observation is not a failure or a measured quality movement.
         "delta_pass_rate": (
-            sum(right[k]["status"] == "pass" for k in paired)
-            - sum(left[k]["status"] == "pass" for k in paired)
+            (sum(status(right, k) == "pass" for k in paired) - sum(status(left, k) == "pass" for k in paired))
+            / len(paired)
         )
-        / len(paired)
-        if paired
+        if paired and all(status(left, k) != "pending" and status(right, k) != "pending" for k in paired)
         else None,
     }

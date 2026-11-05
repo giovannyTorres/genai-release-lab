@@ -4,7 +4,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class Strict(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
 
 
 class ToolCall(Strict):
@@ -16,7 +16,7 @@ class Authorization(Strict):
     actor_role: str
     allowed_roles: list[str]
     action: str
-    authorized: bool
+    authorized: bool = Field(strict=True)
     # A model-produced assertion is not trusted backend evidence.
     evidence_source: Literal["backend_trace", "model_claim"] = "model_claim"
 
@@ -26,7 +26,7 @@ class Output(Strict):
     citations: list[str] = Field(default_factory=list, max_length=100)
     tool_calls: list[ToolCall] = Field(default_factory=list, max_length=20)
     authorization: Authorization | None = None
-    tokens: int | None = Field(default=None, ge=0)
+    tokens: int | None = Field(default=None, ge=0, strict=True)
 
 
 class RagExpectation(Strict):
@@ -36,12 +36,29 @@ class RagExpectation(Strict):
     abstain: bool = False
     answer: str = ""
 
+    @model_validator(mode="after")
+    def evidence_contract(self):
+        if not set(self.required_citations) <= set(self.allowed_citations):
+            raise ValueError("Required references must be allowed")
+        if self.abstain:
+            if not self.answer.strip() or self.required_citations:
+                raise ValueError("Abstention requires explicit text and no required citations")
+        elif not self.answer_contains or not all(x.strip() for x in self.answer_contains):
+            raise ValueError("Answer checks require at least one nonempty expected fact")
+        return self
+
 
 class AgentExpectation(Strict):
     tool_calls: list[ToolCall]
     authorization_required: bool
     allowed_roles: list[str]
     action: str
+
+    @model_validator(mode="after")
+    def authorization_contract(self):
+        if self.authorization_required and (not self.allowed_roles or not self.action.strip()):
+            raise ValueError("Authorization checks require an action and expected roles")
+        return self
 
 
 class Case(Strict):
@@ -55,7 +72,7 @@ class Case(Strict):
     @model_validator(mode="after")
     def validate_expectation(self):
         schema = RagExpectation if self.kind == "rag" else AgentExpectation
-        schema.model_validate(self.expected)
+        self.expected = schema.model_validate(self.expected).model_dump()
         return self
 
 
@@ -82,12 +99,14 @@ class ConfigurationInput(Strict):
     )
     rubric_version: str = "grounding-v1"
     provider: Literal["openai", "gemini"] = "openai"
-    model: str = Field(default="gpt-4.1-mini", max_length=100)
+    model: str = Field(default="gpt-4.1-mini", min_length=1, max_length=100)
     price_per_million_tokens: float | None = Field(default=None, ge=0)
     price_date: str | None = Field(default=None, pattern=r"^\d{4}-\d{2}-\d{2}$")
 
     @model_validator(mode="after")
     def pricing(self):
+        if self.require_llm and (not self.rubric.strip() or not self.rubric_version.strip()):
+            raise ValueError("Mandatory judge requires a rubric and version")
         if self.price_date is not None:
             date.fromisoformat(self.price_date)
         if (self.price_date is None) != (self.price_per_million_tokens is None):

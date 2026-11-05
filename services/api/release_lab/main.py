@@ -10,14 +10,16 @@ from datetime import timedelta
 from urllib.parse import urlsplit
 from contextlib import asynccontextmanager
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
-from pydantic import BaseModel, ValidationError
-from sqlalchemy import select, text
+from pydantic import BaseModel, Field, ValidationError
+from sqlalchemy import func, select, text
 from sqlalchemy.exc import IntegrityError
-from .evaluation import compare, digest
+from .evaluation import EVALUATOR_VERSION, compare, digest
 from .exports import export
 from .models import (
     Audit,
@@ -34,6 +36,8 @@ from .models import (
 )
 from .providers import readiness
 from .security import verify_password
+from .json_contract import strict_loads
+from .limits import login_limit
 from .schemas import (
     Approval,
     Case,
@@ -47,9 +51,12 @@ from .schemas import (
 )
 from .seed import ROOT, seed
 from .endpoints import resolve_public
+from .telemetry import configure_logging
 
-logging.basicConfig(level=logging.INFO, format="%(message)s")
+configure_logging()
 log = logging.getLogger("release.api")
+# Keep structured path-only logs; Uvicorn access lines include secret-bearing query strings.
+logging.getLogger("uvicorn.access").disabled = True
 provider = TracerProvider()
 if os.getenv("OTEL_CONSOLE", "false") == "true":
     provider.add_span_processor(BatchSpanProcessor(ConsoleSpanExporter()))
@@ -69,7 +76,26 @@ app = FastAPI(
     docs_url="/api/docs",
     openapi_url="/api/openapi.json",
 )
-FastAPIInstrumentor.instrument_app(app)
+
+
+@app.exception_handler(RequestValidationError)
+async def safe_validation_error(request: Request, exc: RequestValidationError):
+    # Preserve the documented validation contract without echoing passwords or imported bodies.
+    return JSONResponse(
+        status_code=422,
+        content={"detail": [{key: issue[key] for key in ("loc", "msg", "type")} for issue in exc.errors()]},
+    )
+
+
+def safe_request_span(span, scope):
+    if span and span.is_recording():
+        path = scope.get("path", "/")
+        for attribute in ("http.url", "http.target", "url.full"):
+            span.set_attribute(attribute, path)
+        span.set_attribute("url.query", "")
+
+
+FastAPIInstrumentor.instrument_app(app, server_request_hook=safe_request_span)
 
 
 @app.middleware("http")
@@ -122,9 +148,20 @@ def database():
         yield db
 
 
+def session_digest(token):
+    # Configuration changes revoke all LIVE sessions, including password or role rotation.
+    namespace = MODE + (digest(live_users()) if MODE == "LIVE" else "")
+    return hashlib.sha256((namespace + token).encode()).hexdigest()
+
+
 def auth(request: Request, db=Depends(database)):
     token = request.cookies.get("release_session")
-    row = db.get(Session, hashlib.sha256((MODE + (token or "")).encode()).hexdigest())
+    try:
+        key = session_digest(token or "")
+    except HTTPException:
+        # Invalid/removed account configuration cannot authenticate an old session.
+        raise HTTPException(401, "Sign in to continue") from None
+    row = db.get(Session, key)
     if not row or row.expires_at.replace(tzinfo=now().tzinfo) < now():
         raise HTTPException(401, "Sign in to continue")
     return {"username": row.username, "role": row.role}
@@ -194,9 +231,9 @@ def job_dict(job, full=False):
 def parse(content, format, model):
     try:
         rows = (
-            json.loads(content)
+            strict_loads(content)
             if format == "json"
-            else [json.loads(line) for line in content.splitlines() if line.strip()]
+            else [strict_loads(line) for line in content.splitlines() if line.strip()]
         )
         if not isinstance(rows, list) or not 1 <= len(rows) <= 1000:
             raise ValueError("Expected 1–1000 records")
@@ -212,8 +249,8 @@ def parse(content, format, model):
 
 
 class Login(BaseModel):
-    username: str
-    password: str
+    username: str = Field(min_length=1, max_length=100)
+    password: str = Field(min_length=1, max_length=256)
 
 
 @app.get("/api/health")
@@ -222,12 +259,34 @@ def health(db=Depends(database)):
     return {"status": "ok"}
 
 
+def live_users():
+    try:
+        users = strict_loads(os.getenv("LIVE_USERS_JSON", "{}"))
+        if (
+            not isinstance(users, dict)
+            or not users
+            or any(
+                not isinstance(v, dict)
+                or v.get("role") not in {"operator", "reviewer", "viewer"}
+                or not isinstance(v.get("password_hash"), str)
+                for v in users.values()
+            )
+        ):
+            raise ValueError("Invalid user configuration")
+        return users
+    except (ValueError, TypeError):
+        raise HTTPException(503, "LIVE account configuration is incomplete or invalid") from None
+
+
 @app.get("/api/status")
 def status():
     live = readiness(os.getenv("MODEL_PROVIDER", "openai"))
-    if MODE == "LIVE" and os.getenv("LIVE_USERS_JSON", "{}").strip() in {"", "{}"}:
-        live["missing"].append("LIVE_USERS_JSON")
-        live["ready"] = False
+    if MODE == "LIVE":
+        try:
+            live_users()
+        except HTTPException:
+            live["missing"].append("Valid LIVE_USERS_JSON")
+            live["ready"] = False
     return {
         "mode": MODE,
         "live": live,
@@ -236,11 +295,12 @@ def status():
 
 
 @app.post("/api/auth/login")
-def login(body: Login, response: Response, db=Depends(database)):
+def login(body: Login, request: Request, response: Response, db=Depends(database)):
+    login_limit(request.client.host if request.client else "unknown", body.username)
     users = (
         {"operator": "operator", "reviewer": "reviewer", "viewer": "viewer"}
         if MODE == "DEMO"
-        else json.loads(os.getenv("LIVE_USERS_JSON", "{}"))
+        else live_users()
     )
     if MODE == "LIVE":
         record = users.get(body.username, {})
@@ -254,7 +314,7 @@ def login(body: Login, response: Response, db=Depends(database)):
     token = secrets.token_urlsafe(32)
     db.add(
         Session(
-            token_hash=hashlib.sha256((MODE + token).encode()).hexdigest(),
+            token_hash=session_digest(token),
             username=body.username,
             role=user_role,
             expires_at=now() + timedelta(hours=8),
@@ -279,9 +339,11 @@ def me(user=Depends(auth)):
 
 @app.post("/api/auth/logout")
 def logout(request: Request, response: Response, db=Depends(database)):
-    row = db.get(
-        Session, hashlib.sha256((MODE + request.cookies.get("release_session", "")).encode()).hexdigest()
-    )
+    try:
+        key = session_digest(request.cookies.get("release_session", ""))
+    except HTTPException:
+        key = None  # Invalid account configuration has already revoked these sessions.
+    row = db.get(Session, key) if key else None
     if row:
         db.delete(row)
         db.commit()
@@ -349,16 +411,31 @@ def configuration(
     return {"id": item.id, "hash": item.hash, **item.spec}
 
 
+def admit_job(db, username):
+    # Serialize per-actor admission in PostgreSQL, so concurrent submissions cannot bypass the cap.
+    if db.bind.dialect.name == "postgresql":
+        db.execute(text("SELECT pg_advisory_xact_lock(hashtext(:key))"), {"key": MODE + ":jobs:" + username})
+    active = db.scalar(
+        select(func.count())
+        .select_from(Job)
+        .where(Job.mode == MODE, Job.created_by == username, Job.status.in_(["queued", "running"]))
+    )
+    if active >= 5:
+        raise HTTPException(429, "At most five queued or running evaluations are allowed per operator")
+
+
 def create_job(body, inputs, source, user, request, db):
     dataset = owned(db, Dataset, body.dataset_id)
     config = owned(db, Configuration, body.configuration_id)
     unknown = set(inputs.get("outputs", {})) - {c["id"] for c in dataset.cases}
     if unknown:
         raise HTTPException(422, "Output contains case IDs outside this dataset")
+    admit_job(db, user["username"])
     provenance = {
         "dataset_hash": dataset.hash,
         "configuration_hash": config.hash,
-        "evaluator_version": "deterministic-1.0.0",
+        "evaluator_version": EVALUATOR_VERSION,
+        "source": source,
         **inputs,
     }
     job = Job(
@@ -462,6 +539,7 @@ def retry(id: str, request: Request, user=Depends(role("operator")), db=Depends(
     item = db.scalar(select(Job).where(Job.id == id, Job.mode == MODE).with_for_update())
     if not item or item.status not in {"failed", "cancelled"}:
         raise HTTPException(409, "Only failed or cancelled jobs can resume")
+    admit_job(db, item.created_by)
     item.status = "queued"
     item.error = None
     item.worker_id = None
@@ -514,14 +592,28 @@ def approve(id: str, body: Approval, request: Request, user=Depends(role("review
 @app.get("/api/compare")
 def comparison(baseline: str, candidate: str, user=Depends(auth), db=Depends(database)):
     a, b = owned(db, Job, baseline), owned(db, Job, candidate)
-    return {"baseline_id": a.id, "candidate_id": b.id, **compare(a.results, b.results)}
+    return {
+        "baseline_id": a.id,
+        "candidate_id": b.id,
+        "same_configuration": a.inputs.get("configuration_hash") == b.inputs.get("configuration_hash"),
+        "same_evaluator": a.inputs.get("evaluator_version") == b.inputs.get("evaluator_version"),
+        **compare(
+            a.results,
+            b.results,
+            owned(db, Dataset, a.dataset_id).cases,
+            owned(db, Dataset, b.dataset_id).cases,
+        ),
+    }
 
 
 @app.get("/api/jobs/{id}/export")
 def export_job(id: str, format: str = "json", user=Depends(auth), db=Depends(database)):
     if format not in {"json", "junit", "html"}:
         raise HTTPException(422, "Choose json, junit or html")
-    content, mime = export(job_dict(owned(db, Job, id), True), format)
+    item = owned(db, Job, id)
+    payload = job_dict(item, True)
+    payload["expected_cases"] = owned(db, Dataset, item.dataset_id).cases
+    content, mime = export(payload, format)
     return Response(
         content,
         media_type=mime,

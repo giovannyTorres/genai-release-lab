@@ -72,7 +72,13 @@ export type Comparison = {
     candidate: unknown;
   }>;
   improvements: unknown[];
-  delta_pass_rate: number;
+  delta_pass_rate: number | null;
+  incompatible_cases: string[];
+  unprocessed_baseline: string[];
+  unprocessed_candidate: string[];
+  pending_pairs: number;
+  same_configuration: boolean;
+  same_evaluator: boolean;
 };
 export async function api<T>(
   path: string,

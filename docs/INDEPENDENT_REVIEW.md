@@ -1,3 +1,5 @@
+> Historical construction review. The current independent HTTP checks and corrections are recorded in [audit.md](audit.md).
+
 # Independent local review
 
 Session date: 2026-11-05. All data used in these checks is original and synthetic. No model service was contacted and no cloud resource was created.

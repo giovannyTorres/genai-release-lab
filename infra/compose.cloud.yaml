@@ -1,12 +1,23 @@
-# Optional managed-workspace proxy CA mount; normal Compose needs no host-specific certificate.
+# Optional managed-workspace trust. Public CA bundle is mounted, never copied into images.
+x-runtime-trust: &runtime-trust
+  environment:
+    SSL_CERT_FILE: /run/release-ca-bundle.pem
+  volumes:
+    - type: bind
+      source: ${RELEASE_CA_BUNDLE:-/etc/ssl/certs/ca-certificates.crt}
+      target: /run/release-ca-bundle.pem
+      read_only: true
 services:
   api:
+    <<: *runtime-trust
     build:
       secrets: [proxy_ca]
   worker:
+    <<: *runtime-trust
     build:
       secrets: [proxy_ca]
   migrate:
+    <<: *runtime-trust
     build:
       secrets: [proxy_ca]
   web:
@@ -14,4 +25,4 @@ services:
       secrets: [proxy_ca]
 secrets:
   proxy_ca:
-    file: ${CODEX_PROXY_CERT}
+    file: ${RELEASE_CA_BUNDLE:-/etc/ssl/certs/ca-certificates.crt}

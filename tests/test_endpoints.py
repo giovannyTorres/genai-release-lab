@@ -30,3 +30,28 @@ async def test_reject_private_or_mapped_dns(ip, monkeypatch):
     monkeypatch.setattr(asyncio.get_running_loop(), "getaddrinfo", dns)
     with pytest.raises(ValueError):
         await resolve_public("https://allowed.example/evaluate")
+
+
+async def test_dns_resolution_is_time_bounded(monkeypatch):
+    from release_lab import endpoints
+
+    monkeypatch.setenv("ENDPOINT_ALLOWED_HOSTS", "allowed.example")
+    monkeypatch.setattr(endpoints, "DNS_TIMEOUT_SECONDS", 0.01)
+
+    async def dns(*args, **kwargs):
+        await asyncio.Event().wait()
+
+    monkeypatch.setattr(asyncio.get_running_loop(), "getaddrinfo", dns)
+    with pytest.raises(TimeoutError):
+        await resolve_public("https://allowed.example/evaluate")
+
+
+async def test_mixed_public_and_private_dns_is_rejected(monkeypatch):
+    monkeypatch.setenv("ENDPOINT_ALLOWED_HOSTS", "allowed.example")
+
+    async def dns(*args, **kwargs):
+        return [(None, None, None, None, (ip, 443)) for ip in ["93.184.216.34", "10.0.0.1"]]
+
+    monkeypatch.setattr(asyncio.get_running_loop(), "getaddrinfo", dns)
+    with pytest.raises(ValueError, match="forbidden network"):
+        await resolve_public("https://allowed.example/evaluate")

@@ -66,7 +66,7 @@
   --navy: #14252e;
   --navy-deep: #10212a;
   --ink: #203139;
-  --muted: #75818a;
+  --muted: #596872;
   --paper: #f6f7f8;
   --line: #e4e8ea;
   --amber: #e6ae54;
@@ -600,7 +600,7 @@ pre {
 .metric small {
   display: block;
   font-size: 9px;
-  color: #94a0a7;
+  color: var(--muted);
 }
 .mini-dot {
   display: inline-block;
@@ -953,7 +953,7 @@ tbody tr:hover {
 .empty {
   padding: 52px 30px;
   text-align: center;
-  color: #93a2ab;
+  color: var(--muted);
 }
 .empty svg {
   color: #aab8c0;
@@ -1164,7 +1164,7 @@ tbody tr:hover {
 }
 .missing-panel p {
   overflow-wrap: anywhere;
-  color: #83959f;
+  color: var(--muted);
 }
 .alert {
   display: flex;
@@ -1250,7 +1250,7 @@ tbody tr:hover {
 }
 .field-hint {
   font-size: 10px;
-  color: #94a2ab;
+  color: var(--muted);
   line-height: 1.8;
   margin-top: 7px;
 }

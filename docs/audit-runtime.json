@@ -1,0 +1,14 @@
+{
+  "kind": "Actual Docker restart with synthetic deterministic inputs; no model calls",
+  "project": "audit-release-clean",
+  "job_id": "f0bfb6d5-bbd9-46f6-a4b8-c7bbaec4cf94",
+  "input_hash": "1b336f746ea44e5330073f8559abc27cbd43f9e84d394982beb30aabdf7c5f60",
+  "observed_running_progress": 15,
+  "checkpoint_after_stop": 23,
+  "checkpoint_status": "queued",
+  "api_session_survived_restart": true,
+  "final_status": "completed",
+  "final_progress": 1000,
+  "unique_results": 1000,
+  "final_decision": "approved"
+}

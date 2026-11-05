@@ -6,3 +6,11 @@
 .env
 **/test-results
 **/.pytest_cache
+**/.env*
+.run
+**/*.log
+**/playwright-report
+**/test-results
+**/.ruff_cache
+**/.mypy_cache
+**/__pycache__

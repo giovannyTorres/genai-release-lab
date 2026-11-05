@@ -1,29 +1,33 @@
-# Verification record
+# Verification record — audit candidate, 2026-11-05
 
-Executed locally on 2026-11-05. No model API key was supplied and no paid inference call or cloud deployment was performed.
+Current evidence supersedes the initial construction report. No model key, paid inference call, remote publication or cloud deployment was used. See [audit.md](audit.md) for reproduced defects, severity, exact commands, tested image IDs and limits.
 
 | Check | Observed result |
 |---|---|
-| Python lint | `uv run ruff check services tests migrations` passed |
-| Backend suite | 33 passed, 2 LIVE smoke tests skipped intentionally |
-| Real PostgreSQL suite | 33 passed, 2 skipped against dedicated PostgreSQL 17.6 test database |
-| Official SDK transport contracts | OpenAI and Gemini structured generation, actual SDK HTTP serialization and usage parsing, and sanitized errors passed using simulated HTTP transports |
-| Endpoint transport review | 4 independent tests passed: DNS-pinned IP + Host/SNI, redirect rejection, response size limit, invalid JSON |
-| Deterministic fixtures | Reference 60/60 approved; deliberately changed outputs 30/60 rejected; required LLM 60 pending/inconclusive |
-| CLI | Tests verified exit 0 approved, 2 rejected, 3 inconclusive; invalid input exits 4 |
-| Data/permissions | Authenticated roles, mode isolation, scrypt password hashes, strict imports, missing outputs, expired lease recovery, cancel/retry, approvals and exports passed |
-| Frontend checks | Production build, TypeScript, ESLint, and 6 Vitest tests passed, including runtime proxy contracts |
-| Production browser | 5 Playwright workflows passed against built standalone Next, actual FastAPI, worker and PostgreSQL; configuration creation, imports, comparisons, approvals, mandatory-pending state, keyboard focus and mobile overflow checked |
-| One-command local DEMO | `./scripts/demo-local.sh` verified: frozen offline dependencies, Compose PostgreSQL healthcheck, migrations, idempotent seed, production build, API/worker startup and same-origin health |
-| Azure configuration | Bicep v0.48.1 compiled locally without warnings; no resource provisioning or Azure what-if performed |
-| Full-container path | Compose configuration validated. Final all-container image rebuild/boot is **not verified**: an environment-wide proxy outage returned HTTP 503 from PyPI and Docker Hub on 2026-11-05 around 00:19 UTC |
+| Backend | **112 passed, 2 LIVE smokes skipped**, on a dedicated PostgreSQL 17.6 test database; ordinary application `DATABASE_URL` cannot select the destructive test database |
+| Provider/endpoint contracts | 70 tests, including official SDK HTTP serialization, completed/incomplete/refused/blocked responses, strict JSON, cancellation, bounded retries, connection closure, secret redaction and pinned public endpoint transport |
+| Frontend | ESLint, TypeScript, **6 unit tests**, and production Next build passed |
+| Final Docker browser | **11 passed**: eight actual-backend journeys plus three explicitly mocked browser authentication/status contracts; desktop, 390×844 mobile, focus, empty/loading/error/recovery states |
+| Fresh Docker | API and web rebuilt using `--no-cache --pull`; final backend rebuilt again after validation-error redaction. New `audit-release-clean_release-data` volume, migration revision 001, idempotent seed, non-root API/worker/web and four healthy services |
+| Real restart | Actual worker interrupted at 23/1000 persisted cases; API session survived restart; worker resumed to 1000 unique results with unchanged input hash. [Record](audit-runtime.json), [reproduction script](../scripts/audit-recovery.py) |
+| Independent HTTP checks | Unauthenticated requests 401; hostile-origin and unauthorized-role writes 403; rejected or mandatory-pending approvals 409; OpenAPI 200; invalid password validation does not echo its input |
+| Deterministic gate evidence | Renamed imported regression contents rejected at 30/60; reference plus mandatory unconfigured judge inconclusive with 60/60 pending. No version-name shortcut. These are synthetic software checks, not model-quality results |
+| CLI | Actual subprocess exit 0 approved, 2 rejected, 3 inconclusive, 4 invalid input; argument errors also exit 4 |
+| Logging/TLS | Actual canary query absent from API logs/spans, correlation/path retained. Public official Gemini documentation HTTPS200 from final API container with verified runtime proxy CA; no inference endpoint contacted |
+| Infrastructure | Compose configuration and local Bicep v0.48.1 compilation passed; no Azure resource or hosted GitHub Actions execution |
 
-An earlier managed-workspace VFS disk shortage was resolved with unused build-cache cleanup and smaller image layers. The final blocker was distinct: `jiter==0.18.0` wheel download from `files.pythonhosted.org` returned 503, followed by Docker frontend manifest HEAD returning 503. Direct PyPI/GitHub requests also failed with the proxy message “upstream connect error … envoy://cloudflare_https_tunnel”. Environment status remained connected with unrestricted policy; no proxy or TLS protections were disabled. Final Dockerfiles include non-root application ownership fixes but require a successful rebuild/boot after this external outage clears.
+The final audit application containers were stopped with `down` without `-v`; generated audit application images/cache were removed to reclaim shared workspace disk. Original and both audit data volumes remain. The application is not left running, and these image IDs are historical verification evidence rather than a claim that images remain cached. Rebuild using the commands in the audit.
 
-The verified fallback uses the same application code and production web output, with actual PostgreSQL in Docker. It does not establish that the complete application-container deployment was tested. Screenshots in `docs/screenshots/` are actual production-browser captures with synthetic data; accessibility checks cover keyboard focus, responsive overflow and labeled controls, not a WCAG certification.
+Real screenshots in `docs/screenshots/audit-*.png` were captured after the final Docker build and visually reviewed. Browser contracts that mock LIVE status/auth responses are identified in `tests/e2e/auth-contract.spec.ts`; actual LIVE account authentication and revocation are also tested directly against the backend, without model credentials. Accessibility checks are focused tests, not certification.
 
-## Pending external verification
+## Historical construction evidence
 
-OpenAI/Gemini real service authentication, quotas, model availability, structured-output behavior and actual quality evaluations require explicitly supplied credentials and LIVE smoke opt-in. Public endpoint evaluation is implemented and tested with transport simulations; no external endpoint owner was contacted. Azure Container Apps networking/identity, PostgreSQL managed-service connectivity, registry image pull and deployment remain unverified until an authorized future deployment.
+The earlier delivery had 33 backend tests, five browser journeys and a successful cached local-process launcher run. Its final container rebuild was blocked around 00:19 UTC by HTTP503 downloading the `jiter==0.18.0` wheel from `files.pythonhosted.org`, then a Docker Hub frontend manifest HEAD failed with the managed proxy's upstream connection error. That was a concrete external failure, **resolved during this audit**. It is not a current Docker blocker.
 
-CI YAML was exercised through equivalent local commands; no GitHub remote was created and no hosted Actions run is claimed. Runtime fixture outcomes are illustrative verification, not model benchmark metrics or business impact.
+The alternative launcher uses frozen caches and the same repository code; the audit inspected its prerequisites, secret isolation, occupied-port behavior and process supervision. The new portable-installation evidence comes from clean Docker builds and volumes, not manually installed dependencies or another repository's assets.
+
+## Remaining external verification
+
+OpenAI/Gemini authentication, quotas, model availability, live structured-output acceptance and actual quality evaluation require future explicit LIVE smoke execution with credentials. Endpoint evaluation is transport-tested, requires an authorized public destination and direct egress; proxy CONNECT support is not implemented. Imported trace authenticity remains the operator's trust boundary.
+
+Azure networking, identity, managed PostgreSQL, registry pull and deployment remain unverified. Equivalent CI commands ran locally, but no hosted Actions run is claimed. Distributed abuse protection, production load, comprehensive security assessment and full accessibility review remain outside this portfolio audit. This candidate is ready for portfolio review within those limits, not declared production-ready.

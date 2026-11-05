@@ -1,5 +1,6 @@
 name: genai-release-lab
 x-backend: &backend
+  image: genai-release-lab-backend:${IMAGE_TAG:-local}
   build:
     context: .
     dockerfile: services/api/Dockerfile
@@ -60,7 +61,7 @@ services:
   web:
     build:
       context: apps/web
-    ports: ['3103:3103']
+    ports: ['127.0.0.1:3103:3103']
     environment:
       PORT: '3103'
       HOSTNAME: 0.0.0.0

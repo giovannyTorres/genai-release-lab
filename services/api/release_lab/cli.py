@@ -2,14 +2,22 @@
 
 import argparse
 import json
+import sys
 from pathlib import Path
-from .evaluation import evaluate, summarize, digest
+from .evaluation import EVALUATOR_VERSION, evaluate, summarize, digest
+from .json_contract import strict_loads
 from .exports import export
 from .schemas import Case, OutputRecord
 
 
+class GateParser(argparse.ArgumentParser):
+    def error(self, message):
+        self.print_usage(sys.stderr)
+        self.exit(4, "Invalid CLI arguments; use --help for the supported interface\n")
+
+
 def main():
-    parser = argparse.ArgumentParser(
+    parser = GateParser(
         description="Evaluate supplied outputs against a versioned dataset. Exit 0 approved, 2 rejected, 3 inconclusive, 4 invalid input."
     )
     parser.add_argument("--dataset", required=True)
@@ -26,14 +34,16 @@ def main():
     try:
         if not 0 <= args.threshold <= 1:
             raise ValueError("threshold must be between zero and one")
-        cases = [Case.model_validate(c).model_dump() for c in json.loads(Path(args.dataset).read_text())]
+        cases = [Case.model_validate(c).model_dump() for c in strict_loads(Path(args.dataset).read_text())]
         text = Path(args.outputs).read_text()
         rows = (
-            json.loads(text)
+            strict_loads(text)
             if Path(args.outputs).suffix != ".jsonl"
-            else [json.loads(line) for line in text.splitlines() if line.strip()]
+            else [strict_loads(line) for line in text.splitlines() if line.strip()]
         )
         rows = [OutputRecord.model_validate(row).model_dump() for row in rows]
+        if not 1 <= len(cases) <= 1000 or len(rows) > 1000:
+            raise ValueError("Expected 1–1000 cases and at most 1000 output records")
         ids = {c["id"] for c in cases}
         if (
             len(ids) != len(cases)
@@ -55,7 +65,20 @@ def main():
             "label": "CLI evaluation",
             "mode": "IMPORTED",
             "source": "local files",
-            "input_hash": digest({"cases": cases, "outputs": rows}),
+            "input_hash": digest(
+                {
+                    "cases": cases,
+                    "outputs": rows,
+                    "threshold": args.threshold,
+                    "require_llm": args.require_llm,
+                    "evaluator_version": EVALUATOR_VERSION,
+                }
+            ),
+            "evaluation_configuration": {
+                "threshold": args.threshold,
+                "require_llm": args.require_llm,
+                "evaluator_version": EVALUATOR_VERSION,
+            },
             "total": len(cases),
             "results": results,
             "summary": summary,
@@ -67,8 +90,14 @@ def main():
         else:
             print(content)
         return {"approved": 0, "rejected": 2, "inconclusive": 3}[summary["decision"]]
-    except (ValueError, OSError) as exc:
-        print(json.dumps({"error": str(exc)}))
+    except (ValueError, OSError, TypeError):
+        print(
+            json.dumps(
+                {
+                    "error": "Invalid evaluation input or export destination; check schema, identifiers and file access"
+                }
+            )
+        )
         return 4
 
 

@@ -748,6 +748,7 @@
           "model": {
             "type": "string",
             "maxLength": 100,
+            "minLength": 1,
             "title": "Model",
             "default": "gpt-4.1-mini"
           },
@@ -947,10 +948,14 @@
         "properties": {
           "username": {
             "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
             "title": "Username"
           },
           "password": {
             "type": "string",
+            "maxLength": 256,
+            "minLength": 1,
             "title": "Password"
           }
         },

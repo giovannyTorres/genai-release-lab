@@ -1,14 +1,28 @@
 import os
 
-os.environ.setdefault("DATABASE_URL", "sqlite:////tmp/release-tests.db")
-import pytest
-from fastapi.testclient import TestClient
-from release_lab.models import Base, engine
-from release_lab.main import app
+import tempfile
+from urllib.parse import urlsplit
+
+_test_root = tempfile.TemporaryDirectory(prefix="release-audit-tests-")
+test_url = os.getenv("TEST_DATABASE_URL")
+if test_url:
+    if not urlsplit(test_url).path.rstrip("/").endswith("_test"):
+        raise RuntimeError("TEST_DATABASE_URL must name a dedicated database ending in _test")
+else:
+    test_url = "sqlite:///" + _test_root.name + "/release_test.db"
+os.environ["DATABASE_URL"] = test_url
+os.environ["APP_MODE"] = "DEMO"
+import pytest  # noqa: E402 - configure the disposable database before importing application modules
+from fastapi.testclient import TestClient  # noqa: E402
+from release_lab.models import Base, engine  # noqa: E402
+from release_lab.main import app  # noqa: E402
 
 
 @pytest.fixture
 def client():
+    from release_lab.limits import _attempts
+
+    _attempts.clear()
     Base.metadata.drop_all(engine)
     Base.metadata.create_all(engine)
     with TestClient(app) as c:

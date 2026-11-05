@@ -1,0 +1,14 @@
+# Reproducible isolated audit installation; use a new explicit -p project name.
+services:
+  db:
+    ports: ["127.0.0.1:5643:5432"]
+  api:
+    ports: ["127.0.0.1:8203:8103"]
+    environment:
+      PUBLIC_ORIGIN: http://localhost:3203
+      OTEL_CONSOLE: "true"
+  worker:
+    environment:
+      PUBLIC_ORIGIN: http://localhost:3203
+  web:
+    ports: !override ["127.0.0.1:3203:3103"]

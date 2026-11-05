@@ -15,9 +15,11 @@ for port in (3103,8103):
         except OSError:
             raise SystemExit(f'Port {port} is occupied. Stop the existing app before starting this demo.')
 PY
+# Backend secrets must not reach npm lifecycle scripts or the Next runtime.
+frontend_env=(env -u OPENAI_API_KEY -u GEMINI_API_KEY -u LIVE_USERS_JSON -u DATABASE_URL)
 # Explicit offline installation avoids concealing registry failures or silently downloading packages.
 uv sync --frozen --offline || { echo 'Python dependency cache missing. When networking is available, run uv sync --frozen first.' >&2; exit 1; }
-(cd apps/web && npm ci --offline --no-audit --no-fund) || { echo 'npm cache missing. When networking is available, run cd apps/web && npm ci first.' >&2; exit 1; }
+(cd apps/web && "${frontend_env[@]}" npm ci --offline --no-audit --no-fund) || { echo 'npm cache missing. When networking is available, run cd apps/web && npm ci first.' >&2; exit 1; }
 export APP_MODE=DEMO
 export DATABASE_URL='postgresql+psycopg://release:release@127.0.0.1:5543/release'
 export PUBLIC_ORIGIN='http://localhost:3103'
@@ -25,11 +27,11 @@ export COOKIE_SECURE=false
 docker compose -f compose.yaml -f infra/compose.local.yaml up -d --wait db
 .venv/bin/alembic upgrade head
 .venv/bin/python -m release_lab.seed
-(cd apps/web && npm run build && mkdir -p .next/standalone/.next && cp -a .next/static .next/standalone/.next/ && cp -a public .next/standalone/)
+(cd apps/web && "${frontend_env[@]}" npm run build && mkdir -p .next/standalone/.next && cp -a .next/static .next/standalone/.next/ && cp -a public .next/standalone/)
 mkdir -p .run
 .venv/bin/uvicorn release_lab.main:app --host 127.0.0.1 --port 8103 >.run/api.log 2>&1 & api_pid=$!
 .venv/bin/python -m release_lab.worker >.run/worker.log 2>&1 & worker_pid=$!
-PORT=3103 HOSTNAME=127.0.0.1 API_URL=http://127.0.0.1:8103 node apps/web/.next/standalone/server.js >.run/web.log 2>&1 & web_pid=$!
+PORT=3103 HOSTNAME=127.0.0.1 API_URL=http://127.0.0.1:8103 "${frontend_env[@]}" node apps/web/.next/standalone/server.js >.run/web.log 2>&1 & web_pid=$!
 cleanup() {
   kill "$api_pid" "$worker_pid" "$web_pid" 2>/dev/null || true
   wait "$api_pid" "$worker_pid" "$web_pid" 2>/dev/null || true
@@ -48,4 +50,12 @@ else:
     raise SystemExit('Startup did not become healthy. Inspect .run/*.log')
 PY
 printf 'DEMO ready: http://localhost:3103 — operator/reviewer/viewer, password demo-release\nCtrl+C stops application processes; PostgreSQL data persists.\n'
-wait "$web_pid"
+while true; do
+  for child_pid in "$api_pid" "$worker_pid" "$web_pid"; do
+    if ! kill -0 "$child_pid" 2>/dev/null; then
+      echo 'An application service exited. Inspect .run/*.log; stopping sibling services.' >&2
+      exit 1
+    fi
+  done
+  sleep 1
+done

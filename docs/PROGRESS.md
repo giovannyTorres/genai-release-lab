@@ -1,3 +1,5 @@
+> Construction entries below are historical. The current candidate is described in [audit.md](audit.md) and [VERIFICATION.md](VERIFICATION.md).
+
 # Progress and decisions
 
 - 2026-11-05: Independent repository created; no pre-existing user files. Chose PostgreSQL single API + worker with Next same-origin web.
@@ -12,3 +14,13 @@
 - Final validation: 33 backend tests passed (including real PostgreSQL), 2 LIVE smokes skipped; 6 frontend unit tests, lint, types and production build passed; 5 Playwright workflows passed against the one-command local fallback. Actual desktop/mobile production screenshots captured and reviewed.
 - Full application-container rebuild remains externally blocked by the managed proxy returning HTTP503 across PyPI/Docker Hub/GitHub around00:19UTC. No TLS/proxy bypass attempted. `scripts/demo-local.sh` was added and executed successfully using frozen offline caches and a fresh persistent Compose PostgreSQL volume.
 - Azure runtime proxy host configuration and non-root Docker file ownership were corrected. Bicep compiled without warnings. No external repository, deployment, paid model call or cloud resource was created.
+
+## Technical audit — 2026-11-05
+
+- Preserved clean initial `main` at `38fee49`; audited source, SDK contracts, permissions, imports, comparisons, exports, workers, sessions, frontend and infrastructure.
+- Reproduced and corrected fifteen findings, including terminal model status, incompatible comparisons, unsafe test-database selection, session revocation, LIVE login, cancellation and sensitive validation/log output.
+- Final 112 backend tests on dedicated PostgreSQL passed, two LIVE smokes skipped; lint/types, six frontend units and production build passed. Eleven final Docker browser scenarios passed (eight actual journeys, three mocked UI contracts).
+- Fresh uncached/pulled API and web builds, blank audit volume migration and healthchecks passed. The earlier registry503 blocker is resolved. Final backend rebuilt again after validation-response redaction.
+- Real stop/restart retained a 23/1000 checkpoint, session and input hash, then completed1000 unique deterministic cases; record and repeatable script committed.
+- Refreshed actual screenshots and compiled Bicep locally. No paid call, external model acceptance, cloud deployment or hosted CI execution claimed.
+- Stopped audit stack without deleting volumes and removed only generated audit application images/cache to share limited disk with the other two audits. Original data/history preserved.
