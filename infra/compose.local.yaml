@@ -1,0 +1,5 @@
+# Local-process demo: expose only the PostgreSQL service to the host.
+services:
+  db:
+    pull_policy: never
+    ports: ['127.0.0.1:5543:5432']

@@ -1,0 +1,17 @@
+# Optional managed-workspace proxy CA mount; normal Compose needs no host-specific certificate.
+services:
+  api:
+    build:
+      secrets: [proxy_ca]
+  worker:
+    build:
+      secrets: [proxy_ca]
+  migrate:
+    build:
+      secrets: [proxy_ca]
+  web:
+    build:
+      secrets: [proxy_ca]
+secrets:
+  proxy_ca:
+    file: ${CODEX_PROXY_CERT}

@@ -1,0 +1,57 @@
+name: verified-demo
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17.6-bookworm
+        env:
+          POSTGRES_USER: release
+          POSTGRES_PASSWORD: release
+          POSTGRES_DB: release
+        ports: ['5543:5432']
+        options: --health-cmd 'pg_isready -U release' --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql+psycopg://release:release@localhost:5543/release
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with: {version: '0.13.4'}
+      - run: uv sync --frozen
+      - run: uv run alembic upgrade head
+      - run: uv run ruff check services tests migrations
+      - run: uv run pytest -q
+      - name: Verify expected fixture gate rejection without failing healthy CI
+        run: |
+          set +e
+          uv run release-lab --dataset fixtures/cases.json --outputs fixtures/regression.json --export /tmp/regression.json
+          code=$?
+          set -e
+          test "$code" -eq 2
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '24.22.1', cache: npm, cache-dependency-path: apps/web/package-lock.json}
+      - run: npm ci
+        working-directory: apps/web
+      - run: npm run lint && npm run typecheck && npm test && npm run build
+        working-directory: apps/web
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '24.22.1'}
+      - run: docker compose up --build -d --wait
+      - run: npm ci && npx playwright install --with-deps chromium && npm run test:e2e
+        working-directory: apps/web
+      - if: always()
+        run: docker compose logs --no-color > compose.log
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with: {name: demo-browser-evidence, path: 'apps/web/test-results/'}

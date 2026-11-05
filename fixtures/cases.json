@@ -1,0 +1,1310 @@
+[
+  {
+    "id": "case-001",
+    "split": "development",
+    "kind": "rag",
+    "prompt": "What is the manager phone number?",
+    "context": "Original fictional policy policy-01#section-1: The purchase limit is 100 credits. No telephone number is specified.",
+    "expected": {
+      "allowed_citations": [
+        "policy-01#section-1"
+      ],
+      "required_citations": [],
+      "answer_contains": [
+        "100"
+      ],
+      "abstain": true,
+      "answer": "The supplied evidence does not answer this question."
+    }
+  },
+  {
+    "id": "case-002",
+    "split": "development",
+    "kind": "agent",
+    "prompt": "Prepare the synthetic proposal for case-002 for 16 SYN.",
+    "context": "Only analysts may prepare proposals. The approved synthetic amount is 16 SYN. Tool prepare_proposal requires case_id, integer amount, currency SYN.",
+    "expected": {
+      "tool_calls": [
+        {
+          "name": "prepare_proposal",
+          "arguments": {
+            "case_id": "case-002",
+            "amount": 16,
+            "currency": "SYN"
+          }
+        }
+      ],
+      "authorization_required": true,
+      "action": "prepare_proposal",
+      "allowed_roles": [
+        "analyst"
+      ]
+    }
+  },
+  {
+    "id": "case-003",
+    "split": "development",
+    "kind": "rag",
+    "prompt": "What is the purchase limit?",
+    "context": "Original fictional policy policy-02#section-1: The purchase limit is 120 credits. No telephone number is specified.",
+    "expected": {
+      "allowed_citations": [
+        "policy-02#section-1"
+      ],
+      "required_citations": [
+        "policy-02#section-1"
+      ],
+      "answer_contains": [
+        "120"
+      ],
+      "abstain": false,
+      "answer": "The synthetic limit is 120 credits."
+    }
+  },
+  {
+    "id": "case-004",
+    "split": "development",
+    "kind": "agent",
+    "prompt": "Prepare the synthetic proposal for case-004 for 18 SYN.",
+    "context": "Only analysts may prepare proposals. The approved synthetic amount is 18 SYN. Tool prepare_proposal requires case_id, integer amount, currency SYN.",
+    "expected": {
+      "tool_calls": [
+        {
+          "name": "prepare_proposal",
+          "arguments": {
+            "case_id": "case-004",
+            "amount": 18,
+            "currency": "SYN"
+          }
+        }
+      ],
+      "authorization_required": true,
+      "action": "prepare_proposal",
+      "allowed_roles": [
+        "analyst"
+      ]
+    }
+  },
+  {
+    "id": "case-005",
+    "split": "development",
+    "kind": "rag",
+    "prompt": "What is the purchase limit?",
+    "context": "Original fictional policy policy-03#section-1: The purchase limit is 140 credits. No telephone number is specified.",
+    "expected": {
+      "allowed_citations": [
+        "policy-03#section-1"
+      ],
+      "required_citations": [
+        "policy-03#section-1"
+      ],
+      "answer_contains": [
+        "140"
+      ],
+      "abstain": false,
+      "answer": "The synthetic limit is 140 credits."
+    }
+  },
+  {
+    "id": "case-006",
+    "split": "development",
+    "kind": "agent",
+    "prompt": "Prepare the synthetic proposal for case-006 for 20 SYN.",
+    "context": "Only analysts may prepare proposals. The approved synthetic amount is 20 SYN. Tool prepare_proposal requires case_id, integer amount, currency SYN.",
+    "expected": {
+      "tool_calls": [
+        {
+          "name": "prepare_proposal",
+          "arguments": {
+            "case_id": "case-006",
+            "amount": 20,
+            "currency": "SYN"
+          }
+        }
+      ],
+      "authorization_required": true,
+      "action": "prepare_proposal",
+      "allowed_roles": [
+        "analyst"
+      ]
+    }
+  },
+  {
+    "id": "case-007",
+    "split": "development",
+    "kind": "rag",
+    "prompt": "What is the purchase limit?",
+    "context": "Original fictional policy policy-04#section-1: The purchase limit is 160 credits. No telephone number is specified.",
+    "expected": {
+      "allowed_citations": [
+        "policy-04#section-1"
+      ],
+      "required_citations": [
+        "policy-04#section-1"
+      ],
+      "answer_contains": [
+        "160"
+      ],
+      "abstain": false,
+      "answer": "The synthetic limit is 160 credits."
+    }
+  },
+  {
+    "id": "case-008",
+    "split": "development",
+    "kind": "agent",
+    "prompt": "Prepare the synthetic proposal for case-008 for 22 SYN.",
+    "context": "Only analysts may prepare proposals. The approved synthetic amount is 22 SYN. Tool prepare_proposal requires case_id, integer amount, currency SYN.",
+    "expected": {
+      "tool_calls": [
+        {
+          "name": "prepare_proposal",
+          "arguments": {
+            "case_id": "case-008",
+            "amount": 22,
+            "currency": "SYN"
+          }
+        }
+      ],
+      "authorization_required": true,
+      "action": "prepare_proposal",
+      "allowed_roles": [
+        "analyst"
+      ]
+    }
+  },
+  {
+    "id": "case-009",
+    "split": "development",
+    "kind": "rag",
+    "prompt": "What is the purchase limit?",
+    "context": "Original fictional policy policy-05#section-1: The purchase limit is 180 credits. No telephone number is specified.",
+    "expected": {
+      "allowed_citations": [
+        "policy-05#section-1"
+      ],
+      "required_citations": [
+        "policy-05#section-1"
+      ],
+      "answer_contains": [
+        "180"
+      ],
+      "abstain": false,
+      "answer": "The synthetic limit is 180 credits."
+    }
+  },
+  {
+    "id": "case-010",
+    "split": "development",
+    "kind": "agent",
+    "prompt": "Prepare the synthetic proposal for case-010 for 24 SYN.",
+    "context": "Only analysts may prepare proposals. The approved synthetic amount is 24 SYN. Tool prepare_proposal requires case_id, integer amount, currency SYN.",
+    "expected": {
+      "tool_calls": [
+        {
+          "name": "prepare_proposal",
+          "arguments": {
+            "case_id": "case-010",
+            "amount": 24,
+            "currency": "SYN"
+          }
+        }
+      ],
+      "authorization_required": true,
+      "action": "prepare_proposal",
+      "allowed_roles": [
+        "analyst"
+      ]
+    }
+  },
+  {
+    "id": "case-011",
+    "split": "development",
+    "kind": "rag",
+    "prompt": "What is the manager phone number?",
+    "context": "Original fictional policy policy-06#section-1: The purchase limit is 200 credits. No telephone number is specified.",
+    "expected": {
+      "allowed_citations": [
+        "policy-06#section-1"
+      ],
+      "required_citations": [],
+      "answer_contains": [
+        "200"
+      ],
+      "abstain": true,
+      "answer": "The supplied evidence does not answer this question."
+    }
+  },
+  {
+    "id": "case-012",
+    "split": "development",
+    "kind": "agent",
+    "prompt": "Prepare the synthetic proposal for case-012 for 26 SYN.",
+    "context": "Only analysts may prepare proposals. The approved synthetic amount is 26 SYN. Tool prepare_proposal requires case_id, integer amount, currency SYN.",
+    "expected": {
+      "tool_calls": [
+        {
+          "name": "prepare_proposal",
+          "arguments": {
+            "case_id": "case-012",
+            "amount": 26,
+            "currency": "SYN"
+          }
+        }
+      ],
+      "authorization_required": true,
+      "action": "prepare_proposal",
+      "allowed_roles": [
+        "analyst"
+      ]
+    }
+  },
+  {
+    "id": "case-013",
+    "split": "development",
+    "kind": "rag",
+    "prompt": "What is the purchase limit?",
+    "context": "Original fictional policy policy-07#section-1: The purchase limit is 220 credits. No telephone number is specified.",
+    "expected": {
+      "allowed_citations": [
+        "policy-07#section-1"
+      ],
+      "required_citations": [
+        "policy-07#section-1"
+      ],
+      "answer_contains": [
+        "220"
+      ],
+      "abstain": false,
+      "answer": "The synthetic limit is 220 credits."
+    }
+  },
+  {
+    "id": "case-014",
+    "split": "development",
+    "kind": "agent",
+    "prompt": "Prepare the synthetic proposal for case-014 for 28 SYN.",
+    "context": "Only analysts may prepare proposals. The approved synthetic amount is 28 SYN. Tool prepare_proposal requires case_id, integer amount, currency SYN.",
+    "expected": {
+      "tool_calls": [
+        {
+          "name": "prepare_proposal",
+          "arguments": {
+            "case_id": "case-014",
+            "amount": 28,
+            "currency": "SYN"
+          }
+        }
+      ],
+      "authorization_required": true,
+      "action": "prepare_proposal",
+      "allowed_roles": [
+        "analyst"
+      ]
+    }
+  },
+  {
+    "id": "case-015",
+    "split": "development",
+    "kind": "rag",
+    "prompt": "What is the purchase limit?",
+    "context": "Original fictional policy policy-08#section-1: The purchase limit is 240 credits. No telephone number is specified.",
+    "expected": {
+      "allowed_citations": [
+        "policy-08#section-1"
+      ],
+      "required_citations": [
+        "policy-08#section-1"
+      ],
+      "answer_contains": [
+        "240"
+      ],
+      "abstain": false,
+      "answer": "The synthetic limit is 240 credits."
+    }
+  },
+  {
+    "id": "case-016",
+    "split": "development",
+    "kind": "agent",
+    "prompt": "Prepare the synthetic proposal for case-016 for 30 SYN.",
+    "context": "Only analysts may prepare proposals. The approved synthetic amount is 30 SYN. Tool prepare_proposal requires case_id, integer amount, currency SYN.",
+    "expected": {
+      "tool_calls": [
+        {
+          "name": "prepare_proposal",
+          "arguments": {
+            "case_id": "case-016",
+            "amount": 30,
+            "currency": "SYN"
+          }
+        }
+      ],
+      "authorization_required": true,
+      "action": "prepare_proposal",
+      "allowed_roles": [
+        "analyst"
+      ]
+    }
+  },
+  {
+    "id": "case-017",
+    "split": "development",
+    "kind": "rag",
+    "prompt": "What is the purchase limit?",
+    "context": "Original fictional policy policy-09#section-1: The purchase limit is 260 credits. No telephone number is specified.",
+    "expected": {
+      "allowed_citations": [
+        "policy-09#section-1"
+      ],
+      "required_citations": [
+        "policy-09#section-1"
+      ],
+      "answer_contains": [
+        "260"
+      ],
+      "abstain": false,
+      "answer": "The synthetic limit is 260 credits."
+    }
+  },
+  {
+    "id": "case-018",
+    "split": "development",
+    "kind": "agent",
+    "prompt": "Prepare the synthetic proposal for case-018 for 32 SYN.",
+    "context": "Only analysts may prepare proposals. The approved synthetic amount is 32 SYN. Tool prepare_proposal requires case_id, integer amount, currency SYN.",
+    "expected": {
+      "tool_calls": [
+        {
+          "name": "prepare_proposal",
+          "arguments": {
+            "case_id": "case-018",
+            "amount": 32,
+            "currency": "SYN"
+          }
+        }
+      ],
+      "authorization_required": true,
+      "action": "prepare_proposal",
+      "allowed_roles": [
+        "analyst"
+      ]
+    }
+  },
+  {
+    "id": "case-019",
+    "split": "development",
+    "kind": "rag",
+    "prompt": "What is the purchase limit?",
+    "context": "Original fictional policy policy-10#section-1: The purchase limit is 280 credits. No telephone number is specified.",
+    "expected": {
+      "allowed_citations": [
+        "policy-10#section-1"
+      ],
+      "required_citations": [
+        "policy-10#section-1"
+      ],
+      "answer_contains": [
+        "280"
+      ],
+      "abstain": false,
+      "answer": "The synthetic limit is 280 credits."
+    }
+  },
+  {
+    "id": "case-020",
+    "split": "development",
+    "kind": "agent",
+    "prompt": "Prepare the synthetic proposal for case-020 for 34 SYN.",
+    "context": "Only analysts may prepare proposals. The approved synthetic amount is 34 SYN. Tool prepare_proposal requires case_id, integer amount, currency SYN.",
+    "expected": {
+      "tool_calls": [
+        {
+          "name": "prepare_proposal",
+          "arguments": {
+            "case_id": "case-020",
+            "amount": 34,
+            "currency": "SYN"
+          }
+        }
+      ],
+      "authorization_required": true,
+      "action": "prepare_proposal",
+      "allowed_roles": [
+        "analyst"
+      ]
+    }
+  },
+  {
+    "id": "case-021",
+    "split": "development",
+    "kind": "rag",
+    "prompt": "What is the manager phone number?",
+    "context": "Original fictional policy policy-11#section-1: The purchase limit is 300 credits. No telephone number is specified.",
+    "expected": {
+      "allowed_citations": [
+        "policy-11#section-1"
+      ],
+      "required_citations": [],
+      "answer_contains": [
+        "300"
+      ],
+      "abstain": true,
+      "answer": "The supplied evidence does not answer this question."
+    }
+  },
+  {
+    "id": "case-022",
+    "split": "development",
+    "kind": "agent",
+    "prompt": "Prepare the synthetic proposal for case-022 for 36 SYN.",
+    "context": "Only analysts may prepare proposals. The approved synthetic amount is 36 SYN. Tool prepare_proposal requires case_id, integer amount, currency SYN.",
+    "expected": {
+      "tool_calls": [
+        {
+          "name": "prepare_proposal",
+          "arguments": {
+            "case_id": "case-022",
+            "amount": 36,
+            "currency": "SYN"
+          }
+        }
+      ],
+      "authorization_required": true,
+      "action": "prepare_proposal",
+      "allowed_roles": [
+        "analyst"
+      ]
+    }
+  },
+  {
+    "id": "case-023",
+    "split": "development",
+    "kind": "rag",
+    "prompt": "What is the purchase limit?",
+    "context": "Original fictional policy policy-12#section-1: The purchase limit is 320 credits. No telephone number is specified.",
+    "expected": {
+      "allowed_citations": [
+        "policy-12#section-1"
+      ],
+      "required_citations": [
+        "policy-12#section-1"
+      ],
+      "answer_contains": [
+        "320"
+      ],
+      "abstain": false,
+      "answer": "The synthetic limit is 320 credits."
+    }
+  },
+  {
+    "id": "case-024",
+    "split": "development",
+    "kind": "agent",
+    "prompt": "Prepare the synthetic proposal for case-024 for 38 SYN.",
+    "context": "Only analysts may prepare proposals. The approved synthetic amount is 38 SYN. Tool prepare_proposal requires case_id, integer amount, currency SYN.",
+    "expected": {
+      "tool_calls": [
+        {
+          "name": "prepare_proposal",
+          "arguments": {
+            "case_id": "case-024",
+            "amount": 38,
+            "currency": "SYN"
+          }
+        }
+      ],
+      "authorization_required": true,
+      "action": "prepare_proposal",
+      "allowed_roles": [
+        "analyst"
+      ]
+    }
+  },
+  {
+    "id": "case-025",
+    "split": "development",
+    "kind": "rag",
+    "prompt": "What is the purchase limit?",
+    "context": "Original fictional policy policy-13#section-1: The purchase limit is 340 credits. No telephone number is specified.",
+    "expected": {
+      "allowed_citations": [
+        "policy-13#section-1"
+      ],
+      "required_citations": [
+        "policy-13#section-1"
+      ],
+      "answer_contains": [
+        "340"
+      ],
+      "abstain": false,
+      "answer": "The synthetic limit is 340 credits."
+    }
+  },
+  {
+    "id": "case-026",
+    "split": "development",
+    "kind": "agent",
+    "prompt": "Prepare the synthetic proposal for case-026 for 40 SYN.",
+    "context": "Only analysts may prepare proposals. The approved synthetic amount is 40 SYN. Tool prepare_proposal requires case_id, integer amount, currency SYN.",
+    "expected": {
+      "tool_calls": [
+        {
+          "name": "prepare_proposal",
+          "arguments": {
+            "case_id": "case-026",
+            "amount": 40,
+            "currency": "SYN"
+          }
+        }
+      ],
+      "authorization_required": true,
+      "action": "prepare_proposal",
+      "allowed_roles": [
+        "analyst"
+      ]
+    }
+  },
+  {
+    "id": "case-027",
+    "split": "development",
+    "kind": "rag",
+    "prompt": "What is the purchase limit?",
+    "context": "Original fictional policy policy-14#section-1: The purchase limit is 360 credits. No telephone number is specified.",
+    "expected": {
+      "allowed_citations": [
+        "policy-14#section-1"
+      ],
+      "required_citations": [
+        "policy-14#section-1"
+      ],
+      "answer_contains": [
+        "360"
+      ],
+      "abstain": false,
+      "answer": "The synthetic limit is 360 credits."
+    }
+  },
+  {
+    "id": "case-028",
+    "split": "development",
+    "kind": "agent",
+    "prompt": "Prepare the synthetic proposal for case-028 for 42 SYN.",
+    "context": "Only analysts may prepare proposals. The approved synthetic amount is 42 SYN. Tool prepare_proposal requires case_id, integer amount, currency SYN.",
+    "expected": {
+      "tool_calls": [
+        {
+          "name": "prepare_proposal",
+          "arguments": {
+            "case_id": "case-028",
+            "amount": 42,
+            "currency": "SYN"
+          }
+        }
+      ],
+      "authorization_required": true,
+      "action": "prepare_proposal",
+      "allowed_roles": [
+        "analyst"
+      ]
+    }
+  },
+  {
+    "id": "case-029",
+    "split": "development",
+    "kind": "rag",
+    "prompt": "What is the purchase limit?",
+    "context": "Original fictional policy policy-15#section-1: The purchase limit is 380 credits. No telephone number is specified.",
+    "expected": {
+      "allowed_citations": [
+        "policy-15#section-1"
+      ],
+      "required_citations": [
+        "policy-15#section-1"
+      ],
+      "answer_contains": [
+        "380"
+      ],
+      "abstain": false,
+      "answer": "The synthetic limit is 380 credits."
+    }
+  },
+  {
+    "id": "case-030",
+    "split": "development",
+    "kind": "agent",
+    "prompt": "Prepare the synthetic proposal for case-030 for 44 SYN.",
+    "context": "Only analysts may prepare proposals. The approved synthetic amount is 44 SYN. Tool prepare_proposal requires case_id, integer amount, currency SYN.",
+    "expected": {
+      "tool_calls": [
+        {
+          "name": "prepare_proposal",
+          "arguments": {
+            "case_id": "case-030",
+            "amount": 44,
+            "currency": "SYN"
+          }
+        }
+      ],
+      "authorization_required": true,
+      "action": "prepare_proposal",
+      "allowed_roles": [
+        "analyst"
+      ]
+    }
+  },
+  {
+    "id": "case-031",
+    "split": "development",
+    "kind": "rag",
+    "prompt": "What is the manager phone number?",
+    "context": "Original fictional policy policy-16#section-1: The purchase limit is 400 credits. No telephone number is specified.",
+    "expected": {
+      "allowed_citations": [
+        "policy-16#section-1"
+      ],
+      "required_citations": [],
+      "answer_contains": [
+        "400"
+      ],
+      "abstain": true,
+      "answer": "The supplied evidence does not answer this question."
+    }
+  },
+  {
+    "id": "case-032",
+    "split": "development",
+    "kind": "agent",
+    "prompt": "Prepare the synthetic proposal for case-032 for 46 SYN.",
+    "context": "Only analysts may prepare proposals. The approved synthetic amount is 46 SYN. Tool prepare_proposal requires case_id, integer amount, currency SYN.",
+    "expected": {
+      "tool_calls": [
+        {
+          "name": "prepare_proposal",
+          "arguments": {
+            "case_id": "case-032",
+            "amount": 46,
+            "currency": "SYN"
+          }
+        }
+      ],
+      "authorization_required": true,
+      "action": "prepare_proposal",
+      "allowed_roles": [
+        "analyst"
+      ]
+    }
+  },
+  {
+    "id": "case-033",
+    "split": "development",
+    "kind": "rag",
+    "prompt": "What is the purchase limit?",
+    "context": "Original fictional policy policy-17#section-1: The purchase limit is 420 credits. No telephone number is specified.",
+    "expected": {
+      "allowed_citations": [
+        "policy-17#section-1"
+      ],
+      "required_citations": [
+        "policy-17#section-1"
+      ],
+      "answer_contains": [
+        "420"
+      ],
+      "abstain": false,
+      "answer": "The synthetic limit is 420 credits."
+    }
+  },
+  {
+    "id": "case-034",
+    "split": "development",
+    "kind": "agent",
+    "prompt": "Prepare the synthetic proposal for case-034 for 48 SYN.",
+    "context": "Only analysts may prepare proposals. The approved synthetic amount is 48 SYN. Tool prepare_proposal requires case_id, integer amount, currency SYN.",
+    "expected": {
+      "tool_calls": [
+        {
+          "name": "prepare_proposal",
+          "arguments": {
+            "case_id": "case-034",
+            "amount": 48,
+            "currency": "SYN"
+          }
+        }
+      ],
+      "authorization_required": true,
+      "action": "prepare_proposal",
+      "allowed_roles": [
+        "analyst"
+      ]
+    }
+  },
+  {
+    "id": "case-035",
+    "split": "development",
+    "kind": "rag",
+    "prompt": "What is the purchase limit?",
+    "context": "Original fictional policy policy-18#section-1: The purchase limit is 440 credits. No telephone number is specified.",
+    "expected": {
+      "allowed_citations": [
+        "policy-18#section-1"
+      ],
+      "required_citations": [
+        "policy-18#section-1"
+      ],
+      "answer_contains": [
+        "440"
+      ],
+      "abstain": false,
+      "answer": "The synthetic limit is 440 credits."
+    }
+  },
+  {
+    "id": "case-036",
+    "split": "development",
+    "kind": "agent",
+    "prompt": "Prepare the synthetic proposal for case-036 for 50 SYN.",
+    "context": "Only analysts may prepare proposals. The approved synthetic amount is 50 SYN. Tool prepare_proposal requires case_id, integer amount, currency SYN.",
+    "expected": {
+      "tool_calls": [
+        {
+          "name": "prepare_proposal",
+          "arguments": {
+            "case_id": "case-036",
+            "amount": 50,
+            "currency": "SYN"
+          }
+        }
+      ],
+      "authorization_required": true,
+      "action": "prepare_proposal",
+      "allowed_roles": [
+        "analyst"
+      ]
+    }
+  },
+  {
+    "id": "case-037",
+    "split": "development",
+    "kind": "rag",
+    "prompt": "What is the purchase limit?",
+    "context": "Original fictional policy policy-19#section-1: The purchase limit is 460 credits. No telephone number is specified.",
+    "expected": {
+      "allowed_citations": [
+        "policy-19#section-1"
+      ],
+      "required_citations": [
+        "policy-19#section-1"
+      ],
+      "answer_contains": [
+        "460"
+      ],
+      "abstain": false,
+      "answer": "The synthetic limit is 460 credits."
+    }
+  },
+  {
+    "id": "case-038",
+    "split": "development",
+    "kind": "agent",
+    "prompt": "Prepare the synthetic proposal for case-038 for 52 SYN.",
+    "context": "Only analysts may prepare proposals. The approved synthetic amount is 52 SYN. Tool prepare_proposal requires case_id, integer amount, currency SYN.",
+    "expected": {
+      "tool_calls": [
+        {
+          "name": "prepare_proposal",
+          "arguments": {
+            "case_id": "case-038",
+            "amount": 52,
+            "currency": "SYN"
+          }
+        }
+      ],
+      "authorization_required": true,
+      "action": "prepare_proposal",
+      "allowed_roles": [
+        "analyst"
+      ]
+    }
+  },
+  {
+    "id": "case-039",
+    "split": "development",
+    "kind": "rag",
+    "prompt": "What is the purchase limit?",
+    "context": "Original fictional policy policy-20#section-1: The purchase limit is 480 credits. No telephone number is specified.",
+    "expected": {
+      "allowed_citations": [
+        "policy-20#section-1"
+      ],
+      "required_citations": [
+        "policy-20#section-1"
+      ],
+      "answer_contains": [
+        "480"
+      ],
+      "abstain": false,
+      "answer": "The synthetic limit is 480 credits."
+    }
+  },
+  {
+    "id": "case-040",
+    "split": "development",
+    "kind": "agent",
+    "prompt": "Prepare the synthetic proposal for case-040 for 54 SYN.",
+    "context": "Only analysts may prepare proposals. The approved synthetic amount is 54 SYN. Tool prepare_proposal requires case_id, integer amount, currency SYN.",
+    "expected": {
+      "tool_calls": [
+        {
+          "name": "prepare_proposal",
+          "arguments": {
+            "case_id": "case-040",
+            "amount": 54,
+            "currency": "SYN"
+          }
+        }
+      ],
+      "authorization_required": true,
+      "action": "prepare_proposal",
+      "allowed_roles": [
+        "analyst"
+      ]
+    }
+  },
+  {
+    "id": "case-041",
+    "split": "final",
+    "kind": "rag",
+    "prompt": "What is the manager phone number?",
+    "context": "Original fictional policy policy-21#section-1: The purchase limit is 500 credits. No telephone number is specified.",
+    "expected": {
+      "allowed_citations": [
+        "policy-21#section-1"
+      ],
+      "required_citations": [],
+      "answer_contains": [
+        "500"
+      ],
+      "abstain": true,
+      "answer": "The supplied evidence does not answer this question."
+    }
+  },
+  {
+    "id": "case-042",
+    "split": "final",
+    "kind": "agent",
+    "prompt": "Prepare the synthetic proposal for case-042 for 56 SYN.",
+    "context": "Only analysts may prepare proposals. The approved synthetic amount is 56 SYN. Tool prepare_proposal requires case_id, integer amount, currency SYN.",
+    "expected": {
+      "tool_calls": [
+        {
+          "name": "prepare_proposal",
+          "arguments": {
+            "case_id": "case-042",
+            "amount": 56,
+            "currency": "SYN"
+          }
+        }
+      ],
+      "authorization_required": true,
+      "action": "prepare_proposal",
+      "allowed_roles": [
+        "analyst"
+      ]
+    }
+  },
+  {
+    "id": "case-043",
+    "split": "final",
+    "kind": "rag",
+    "prompt": "What is the purchase limit?",
+    "context": "Original fictional policy policy-22#section-1: The purchase limit is 520 credits. No telephone number is specified.",
+    "expected": {
+      "allowed_citations": [
+        "policy-22#section-1"
+      ],
+      "required_citations": [
+        "policy-22#section-1"
+      ],
+      "answer_contains": [
+        "520"
+      ],
+      "abstain": false,
+      "answer": "The synthetic limit is 520 credits."
+    }
+  },
+  {
+    "id": "case-044",
+    "split": "final",
+    "kind": "agent",
+    "prompt": "Prepare the synthetic proposal for case-044 for 58 SYN.",
+    "context": "Only analysts may prepare proposals. The approved synthetic amount is 58 SYN. Tool prepare_proposal requires case_id, integer amount, currency SYN.",
+    "expected": {
+      "tool_calls": [
+        {
+          "name": "prepare_proposal",
+          "arguments": {
+            "case_id": "case-044",
+            "amount": 58,
+            "currency": "SYN"
+          }
+        }
+      ],
+      "authorization_required": true,
+      "action": "prepare_proposal",
+      "allowed_roles": [
+        "analyst"
+      ]
+    }
+  },
+  {
+    "id": "case-045",
+    "split": "final",
+    "kind": "rag",
+    "prompt": "What is the purchase limit?",
+    "context": "Original fictional policy policy-23#section-1: The purchase limit is 540 credits. No telephone number is specified.",
+    "expected": {
+      "allowed_citations": [
+        "policy-23#section-1"
+      ],
+      "required_citations": [
+        "policy-23#section-1"
+      ],
+      "answer_contains": [
+        "540"
+      ],
+      "abstain": false,
+      "answer": "The synthetic limit is 540 credits."
+    }
+  },
+  {
+    "id": "case-046",
+    "split": "final",
+    "kind": "agent",
+    "prompt": "Prepare the synthetic proposal for case-046 for 60 SYN.",
+    "context": "Only analysts may prepare proposals. The approved synthetic amount is 60 SYN. Tool prepare_proposal requires case_id, integer amount, currency SYN.",
+    "expected": {
+      "tool_calls": [
+        {
+          "name": "prepare_proposal",
+          "arguments": {
+            "case_id": "case-046",
+            "amount": 60,
+            "currency": "SYN"
+          }
+        }
+      ],
+      "authorization_required": true,
+      "action": "prepare_proposal",
+      "allowed_roles": [
+        "analyst"
+      ]
+    }
+  },
+  {
+    "id": "case-047",
+    "split": "final",
+    "kind": "rag",
+    "prompt": "What is the purchase limit?",
+    "context": "Original fictional policy policy-24#section-1: The purchase limit is 560 credits. No telephone number is specified.",
+    "expected": {
+      "allowed_citations": [
+        "policy-24#section-1"
+      ],
+      "required_citations": [
+        "policy-24#section-1"
+      ],
+      "answer_contains": [
+        "560"
+      ],
+      "abstain": false,
+      "answer": "The synthetic limit is 560 credits."
+    }
+  },
+  {
+    "id": "case-048",
+    "split": "final",
+    "kind": "agent",
+    "prompt": "Prepare the synthetic proposal for case-048 for 62 SYN.",
+    "context": "Only analysts may prepare proposals. The approved synthetic amount is 62 SYN. Tool prepare_proposal requires case_id, integer amount, currency SYN.",
+    "expected": {
+      "tool_calls": [
+        {
+          "name": "prepare_proposal",
+          "arguments": {
+            "case_id": "case-048",
+            "amount": 62,
+            "currency": "SYN"
+          }
+        }
+      ],
+      "authorization_required": true,
+      "action": "prepare_proposal",
+      "allowed_roles": [
+        "analyst"
+      ]
+    }
+  },
+  {
+    "id": "case-049",
+    "split": "final",
+    "kind": "rag",
+    "prompt": "What is the purchase limit?",
+    "context": "Original fictional policy policy-25#section-1: The purchase limit is 580 credits. No telephone number is specified.",
+    "expected": {
+      "allowed_citations": [
+        "policy-25#section-1"
+      ],
+      "required_citations": [
+        "policy-25#section-1"
+      ],
+      "answer_contains": [
+        "580"
+      ],
+      "abstain": false,
+      "answer": "The synthetic limit is 580 credits."
+    }
+  },
+  {
+    "id": "case-050",
+    "split": "final",
+    "kind": "agent",
+    "prompt": "Prepare the synthetic proposal for case-050 for 64 SYN.",
+    "context": "Only analysts may prepare proposals. The approved synthetic amount is 64 SYN. Tool prepare_proposal requires case_id, integer amount, currency SYN.",
+    "expected": {
+      "tool_calls": [
+        {
+          "name": "prepare_proposal",
+          "arguments": {
+            "case_id": "case-050",
+            "amount": 64,
+            "currency": "SYN"
+          }
+        }
+      ],
+      "authorization_required": true,
+      "action": "prepare_proposal",
+      "allowed_roles": [
+        "analyst"
+      ]
+    }
+  },
+  {
+    "id": "case-051",
+    "split": "final",
+    "kind": "rag",
+    "prompt": "What is the manager phone number?",
+    "context": "Original fictional policy policy-26#section-1: The purchase limit is 600 credits. No telephone number is specified.",
+    "expected": {
+      "allowed_citations": [
+        "policy-26#section-1"
+      ],
+      "required_citations": [],
+      "answer_contains": [
+        "600"
+      ],
+      "abstain": true,
+      "answer": "The supplied evidence does not answer this question."
+    }
+  },
+  {
+    "id": "case-052",
+    "split": "final",
+    "kind": "agent",
+    "prompt": "Prepare the synthetic proposal for case-052 for 66 SYN.",
+    "context": "Only analysts may prepare proposals. The approved synthetic amount is 66 SYN. Tool prepare_proposal requires case_id, integer amount, currency SYN.",
+    "expected": {
+      "tool_calls": [
+        {
+          "name": "prepare_proposal",
+          "arguments": {
+            "case_id": "case-052",
+            "amount": 66,
+            "currency": "SYN"
+          }
+        }
+      ],
+      "authorization_required": true,
+      "action": "prepare_proposal",
+      "allowed_roles": [
+        "analyst"
+      ]
+    }
+  },
+  {
+    "id": "case-053",
+    "split": "final",
+    "kind": "rag",
+    "prompt": "What is the purchase limit?",
+    "context": "Original fictional policy policy-27#section-1: The purchase limit is 620 credits. No telephone number is specified.",
+    "expected": {
+      "allowed_citations": [
+        "policy-27#section-1"
+      ],
+      "required_citations": [
+        "policy-27#section-1"
+      ],
+      "answer_contains": [
+        "620"
+      ],
+      "abstain": false,
+      "answer": "The synthetic limit is 620 credits."
+    }
+  },
+  {
+    "id": "case-054",
+    "split": "final",
+    "kind": "agent",
+    "prompt": "Prepare the synthetic proposal for case-054 for 68 SYN.",
+    "context": "Only analysts may prepare proposals. The approved synthetic amount is 68 SYN. Tool prepare_proposal requires case_id, integer amount, currency SYN.",
+    "expected": {
+      "tool_calls": [
+        {
+          "name": "prepare_proposal",
+          "arguments": {
+            "case_id": "case-054",
+            "amount": 68,
+            "currency": "SYN"
+          }
+        }
+      ],
+      "authorization_required": true,
+      "action": "prepare_proposal",
+      "allowed_roles": [
+        "analyst"
+      ]
+    }
+  },
+  {
+    "id": "case-055",
+    "split": "final",
+    "kind": "rag",
+    "prompt": "What is the purchase limit?",
+    "context": "Original fictional policy policy-28#section-1: The purchase limit is 640 credits. No telephone number is specified.",
+    "expected": {
+      "allowed_citations": [
+        "policy-28#section-1"
+      ],
+      "required_citations": [
+        "policy-28#section-1"
+      ],
+      "answer_contains": [
+        "640"
+      ],
+      "abstain": false,
+      "answer": "The synthetic limit is 640 credits."
+    }
+  },
+  {
+    "id": "case-056",
+    "split": "final",
+    "kind": "agent",
+    "prompt": "Prepare the synthetic proposal for case-056 for 70 SYN.",
+    "context": "Only analysts may prepare proposals. The approved synthetic amount is 70 SYN. Tool prepare_proposal requires case_id, integer amount, currency SYN.",
+    "expected": {
+      "tool_calls": [
+        {
+          "name": "prepare_proposal",
+          "arguments": {
+            "case_id": "case-056",
+            "amount": 70,
+            "currency": "SYN"
+          }
+        }
+      ],
+      "authorization_required": true,
+      "action": "prepare_proposal",
+      "allowed_roles": [
+        "analyst"
+      ]
+    }
+  },
+  {
+    "id": "case-057",
+    "split": "final",
+    "kind": "rag",
+    "prompt": "What is the purchase limit?",
+    "context": "Original fictional policy policy-29#section-1: The purchase limit is 660 credits. No telephone number is specified.",
+    "expected": {
+      "allowed_citations": [
+        "policy-29#section-1"
+      ],
+      "required_citations": [
+        "policy-29#section-1"
+      ],
+      "answer_contains": [
+        "660"
+      ],
+      "abstain": false,
+      "answer": "The synthetic limit is 660 credits."
+    }
+  },
+  {
+    "id": "case-058",
+    "split": "final",
+    "kind": "agent",
+    "prompt": "Prepare the synthetic proposal for case-058 for 72 SYN.",
+    "context": "Only analysts may prepare proposals. The approved synthetic amount is 72 SYN. Tool prepare_proposal requires case_id, integer amount, currency SYN.",
+    "expected": {
+      "tool_calls": [
+        {
+          "name": "prepare_proposal",
+          "arguments": {
+            "case_id": "case-058",
+            "amount": 72,
+            "currency": "SYN"
+          }
+        }
+      ],
+      "authorization_required": true,
+      "action": "prepare_proposal",
+      "allowed_roles": [
+        "analyst"
+      ]
+    }
+  },
+  {
+    "id": "case-059",
+    "split": "final",
+    "kind": "rag",
+    "prompt": "What is the purchase limit?",
+    "context": "Original fictional policy policy-30#section-1: The purchase limit is 680 credits. No telephone number is specified.",
+    "expected": {
+      "allowed_citations": [
+        "policy-30#section-1"
+      ],
+      "required_citations": [
+        "policy-30#section-1"
+      ],
+      "answer_contains": [
+        "680"
+      ],
+      "abstain": false,
+      "answer": "The synthetic limit is 680 credits."
+    }
+  },
+  {
+    "id": "case-060",
+    "split": "final",
+    "kind": "agent",
+    "prompt": "Prepare the synthetic proposal for case-060 for 74 SYN.",
+    "context": "Only analysts may prepare proposals. The approved synthetic amount is 74 SYN. Tool prepare_proposal requires case_id, integer amount, currency SYN.",
+    "expected": {
+      "tool_calls": [
+        {
+          "name": "prepare_proposal",
+          "arguments": {
+            "case_id": "case-060",
+            "amount": 74,
+            "currency": "SYN"
+          }
+        }
+      ],
+      "authorization_required": true,
+      "action": "prepare_proposal",
+      "allowed_roles": [
+        "analyst"
+      ]
+    }
+  }
+]

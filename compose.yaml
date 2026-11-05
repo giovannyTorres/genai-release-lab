@@ -1,0 +1,77 @@
+name: genai-release-lab
+x-backend: &backend
+  build:
+    context: .
+    dockerfile: services/api/Dockerfile
+  environment: &env
+    DATABASE_URL: postgresql+psycopg://release:release@db:5432/release
+    APP_MODE: ${APP_MODE:-DEMO}
+    PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:-http://localhost:3103}
+    COOKIE_SECURE: ${COOKIE_SECURE:-false}
+    MODEL_PROVIDER: ${MODEL_PROVIDER:-openai}
+    OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+    LIVE_USERS_JSON: ${LIVE_USERS_JSON:-{}}
+    ENDPOINT_ALLOWED_HOSTS: ${ENDPOINT_ALLOWED_HOSTS:-}
+    MODEL_CONCURRENCY: ${MODEL_CONCURRENCY:-2}
+    MODEL_TIMEOUT_SECONDS: ${MODEL_TIMEOUT_SECONDS:-25}
+    MODEL_MAX_OUTPUT_TOKENS: ${MODEL_MAX_OUTPUT_TOKENS:-1500}
+    MODEL_MAX_RETRIES: ${MODEL_MAX_RETRIES:-1}
+    OTEL_CONSOLE: ${OTEL_CONSOLE:-false}
+  restart: unless-stopped
+services:
+  db:
+    image: postgres:17.6-bookworm
+    environment:
+      POSTGRES_USER: release
+      POSTGRES_PASSWORD: release
+      POSTGRES_DB: release
+    volumes: [release-data:/var/lib/postgresql/data]
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U release -d release]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  migrate:
+    <<: *backend
+    command: [sh, -c, 'alembic upgrade head && python -m release_lab.seed']
+    restart: 'no'
+    depends_on:
+      db: {condition: service_healthy}
+  api:
+    <<: *backend
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8103/api/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  worker:
+    <<: *backend
+    command: [python, services/worker/main.py]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+    healthcheck:
+      test: [CMD, python, -c, "from release_lab.models import engine; from sqlalchemy import text; c=engine.connect(); c.execute(text('select 1'))"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+  web:
+    build:
+      context: apps/web
+    ports: ['3103:3103']
+    environment:
+      PORT: '3103'
+      HOSTNAME: 0.0.0.0
+      API_URL: http://api:8103
+    depends_on:
+      api: {condition: service_healthy}
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3103').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+volumes:
+  release-data:
