@@ -1,18 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 cd "$(dirname "$0")/.."
-for command in docker uv node npm; do
+for command in docker uv node npm python3; do
   command -v "$command" >/dev/null || { echo "Missing prerequisite: $command" >&2; exit 1; }
 done
-# Explicit offline installation avoids concealing registry failures or silently downloading packages.
-uv sync --frozen --offline || { echo 'Python dependency cache missing. When networking is available, run uv sync --frozen first.' >&2; exit 1; }
-(cd apps/web && npm ci --offline --no-audit --no-fund) || { echo 'npm cache missing. When networking is available, run cd apps/web && npm ci first.' >&2; exit 1; }
-export APP_MODE=DEMO
-export DATABASE_URL='postgresql+psycopg://release:release@127.0.0.1:5543/release'
-export PUBLIC_ORIGIN='http://localhost:3103'
-export COOKIE_SECURE=false
 # Refuse to reuse arbitrary listeners; never kill a user's existing process.
-.venv/bin/python - <<'PY'
+python3 - <<'PY'
 import socket
 for port in (3103,8103):
     with socket.socket() as listener:
@@ -22,6 +15,13 @@ for port in (3103,8103):
         except OSError:
             raise SystemExit(f'Port {port} is occupied. Stop the existing app before starting this demo.')
 PY
+# Explicit offline installation avoids concealing registry failures or silently downloading packages.
+uv sync --frozen --offline || { echo 'Python dependency cache missing. When networking is available, run uv sync --frozen first.' >&2; exit 1; }
+(cd apps/web && npm ci --offline --no-audit --no-fund) || { echo 'npm cache missing. When networking is available, run cd apps/web && npm ci first.' >&2; exit 1; }
+export APP_MODE=DEMO
+export DATABASE_URL='postgresql+psycopg://release:release@127.0.0.1:5543/release'
+export PUBLIC_ORIGIN='http://localhost:3103'
+export COOKIE_SECURE=false
 docker compose -f compose.yaml -f infra/compose.local.yaml up -d --wait db
 .venv/bin/alembic upgrade head
 .venv/bin/python -m release_lab.seed
