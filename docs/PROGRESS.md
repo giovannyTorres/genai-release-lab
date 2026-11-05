@@ -17,7 +17,7 @@
 
 ## Technical audit — 2026-11-05
 
-- Preserved clean initial `main` at `38fee49`; audited source, SDK contracts, permissions, imports, comparisons, exports, workers, sessions, frontend and infrastructure.
+- Preserved clean initial `main` at `a158658`; audited source, SDK contracts, permissions, imports, comparisons, exports, workers, sessions, frontend and infrastructure.
 - Reproduced and corrected fifteen findings, including terminal model status, incompatible comparisons, unsafe test-database selection, session revocation, LIVE login, cancellation and sensitive validation/log output.
 - Final 112 backend tests on dedicated PostgreSQL passed, two LIVE smokes skipped; lint/types, six frontend units and production build passed. Eleven final Docker browser scenarios passed (eight actual journeys, three mocked UI contracts).
 - Fresh uncached/pulled API and web builds, blank audit volume migration and healthchecks passed. The earlier registry503 blocker is resolved. Final backend rebuilt again after validation-response redaction.
