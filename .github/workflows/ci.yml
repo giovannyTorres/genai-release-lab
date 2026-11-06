@@ -13,7 +13,7 @@ jobs:
           POSTGRES_PASSWORD: release
           POSTGRES_DB: release_test
         ports: ['5543:5432']
-        options: --health-cmd 'pg_isready -U release' --health-interval 5s --health-timeout 5s --health-retries 10
+        options: --health-cmd "pg_isready -U release" --health-interval 5s --health-timeout 5s --health-retries 10
     env:
       DATABASE_URL: postgresql+psycopg://release:release@localhost:5543/release_test
       TEST_DATABASE_URL: postgresql+psycopg://release:release@localhost:5543/release_test
