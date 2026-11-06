@@ -1,0 +1,3 @@
+{"case_id":"single_source","observation":{"status":"skipped","execution":"live","detail":"Example only: no NVIDIA instance or credentials configured."}}
+{"case_id":"synonym","observation":{"status":"skipped","execution":"live","detail":"Example only: no NVIDIA instance or credentials configured."}}
+{"case_id":"unknown","observation":{"status":"skipped","execution":"live","detail":"Example only: no NVIDIA instance or credentials configured."}}

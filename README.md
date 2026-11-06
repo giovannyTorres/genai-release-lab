@@ -68,6 +68,18 @@ uv run --frozen release-lab --dataset fixtures/cases.json --outputs fixtures/ref
 
 CLI exit codes are **0 approved**, **2 rejected**, **3 inconclusive**, **4 invalid input**. `fixtures/regression.json` intentionally returns 2. Adding `--require-llm` returns 3 because the offline CLI does not run a judge. The quick check treats these expected gate outcomes as successful assertions.
 
+## Compare semantic retrieval changes
+
+The [three-arm benchmark runner](docs/SEMANTIC_BENCHMARK.md) compares baseline, a reviewed glossary and Auto Ontology through typed local adapters or recorded observations. It preserves frozen sources/configuration hashes, per-case traces, import-compatible JSONL and optional typed SQL-result checks. Fixture, mock, missing or mandatory-pending observations keep the affected comparison inconclusive. A complete live baseline/glossary pair can be measured independently of unavailable NVIDIA. The included contract example needs no services or credentials; it deliberately leaves NVIDIA unavailable.
+
+```bash
+uv run python -m release_lab.semantic_benchmark --plan fixtures/semantic-benchmark/plan.json --output-dir .run/contract-run-01
+# Expected exit 3 (inconclusive); use a new directory for each run.
+uv run python -m release_lab.semantic_benchmark --verify --output-dir .run/contract-run-01
+```
+
+The external runner's SQL checks and manifest are not enforced by the existing server import gate. See the guide for caller contracts, authorization provenance, measured scope and import boundaries.
+
 ## Full development checks
 
 Host development additionally uses **Node 24.22.1**. Exact Python/npm versions are recorded in `uv.lock` and `apps/web/package-lock.json`. From the repository root:
