@@ -8,6 +8,7 @@ import argparse
 import hashlib
 import json
 import math
+import os
 import subprocess
 import sys
 import time
@@ -225,21 +226,22 @@ def call_command(arm: Arm, case: dict, base: Path, allow_live: bool) -> tuple[Ob
     ).model_dump()
     start = time.perf_counter()
     try:
+        child_env = os.environ.copy()
+        child_env.update(PYTHONIOENCODING="utf-8", PYTHONUTF8="1")
         process = subprocess.run(
             arm.command,
-            input=json.dumps(request),
+            input=json.dumps(request, ensure_ascii=False).encode("utf-8"),
             capture_output=True,
-            text=True,
-            encoding="utf-8",
+            env=child_env,
             cwd=resolve(base, arm.cwd) if arm.cwd else base,
             timeout=arm.timeout_seconds,
             check=False,
             shell=False,
         )
         elapsed = (time.perf_counter() - start) * 1000
-        if process.returncode or len(process.stdout) > 2_000_000:
+        if process.returncode or not isinstance(process.stdout, bytes) or len(process.stdout) > 2_000_000:
             return safe_observation(arm, "error", "Adapter failed or exceeded output limit"), elapsed
-        observation = Observation.model_validate(strict_loads(process.stdout))
+        observation = Observation.model_validate(strict_loads(process.stdout.decode("utf-8")))
         if observation.execution != arm.execution:
             raise ValueError("Execution kind does not match plan")
         return observation, elapsed

@@ -114,6 +114,67 @@ def test_command_receives_inputs_without_goldens_and_fixture_is_explicit(tmp_pat
     assert "expected" not in result.trace[0]["case"]
 
 
+def test_spanish_python_caller_forces_utf8_over_parent_cp1252(tmp_path, monkeypatch):
+    monkeypatch.setenv("PYTHONIOENCODING", "cp1252")
+    monkeypatch.setenv("PYTHONUTF8", "0")
+    script = tmp_path / "spanish.py"
+    script.write_text(
+        "import json,os,sys\nrequest=json.load(sys.stdin)\n"
+        "assert request['case']['prompt'] == '¿Cuáles son los viáticos?'\n"
+        "assert os.environ['PYTHONIOENCODING'] == 'utf-8'\n"
+        "assert os.environ['PYTHONUTF8'] == '1'\n"
+        "print(json.dumps({'status':'completed','execution':'fixture',"
+        "'output':{'answer':'Los viáticos están aquí: á.'}},ensure_ascii=False))\n",
+        encoding="utf-8",
+    )
+    arm = Arm(name="baseline", execution="fixture", command=[sys.executable, str(script)])
+    subject = {**case(), "prompt": "¿Cuáles son los viáticos?"}
+    result, _ = call_command(arm, subject, tmp_path, False)
+    assert result.status == "completed"
+    assert result.output.answer == "Los viáticos están aquí: á."
+
+
+def test_invalid_utf8_is_per_case_error_and_remaining_cases_finish(tmp_path):
+    path, plan = prepare(tmp_path)
+    script = tmp_path / "invalid_utf8.py"
+    script.write_text(
+        "import json,sys\nrequest=json.load(sys.stdin)\n"
+        "if request['case']['id'] == 'synonym':\n"
+        "    sys.stdout.buffer.write(b'\\xff')\n"
+        "else:\n"
+        "    print(json.dumps({'status':'completed','execution':'fixture',"
+        "'output':{'answer':'650 MXN','citations':['source-v1']}}))\n",
+        encoding="utf-8",
+    )
+    for arm in plan["arms"]:
+        arm.pop("records")
+        arm["command"] = [sys.executable, str(script)]
+    path.write_text(json.dumps(plan), encoding="utf-8")
+    destination = tmp_path / "run"
+    report = run(path, destination)
+    for arm in report["arms"].values():
+        first, second = arm["results"]
+        assert first["observation_status"] == "error" and first["status"] == "pending"
+        assert second["observation_status"] == "completed" and second["status"] == "pass"
+    trace = json.loads((destination / "baseline/trace.json").read_text(encoding="utf-8"))
+    assert trace[0]["observation"]["detail"] == "Adapter timeout, invalid response or execution failure"
+    assert verify(destination)
+
+
+def test_command_stdout_limit_counts_utf8_bytes(tmp_path):
+    script = tmp_path / "oversized.py"
+    script.write_text(
+        "import json\n"
+        "print(json.dumps({'status':'completed','execution':'fixture','output':{'answer':'ok'},"
+        "'trace':[{'payload':'á'*1000001}]},ensure_ascii=False))\n",
+        encoding="utf-8",
+    )
+    arm = Arm(name="baseline", execution="fixture", command=[sys.executable, str(script)])
+    result, _ = call_command(arm, case(), tmp_path, False)
+    assert result.status == "error" and result.output is None
+    assert result.detail == "Adapter failed or exceeded output limit"
+
+
 def test_live_is_opt_in_and_invalid_execution_cannot_be_relabelled(tmp_path):
     arm = Arm(name="auto_ontology", execution="live", command=["never-execute"])
     result, elapsed = call_command(arm, case(), tmp_path, False)

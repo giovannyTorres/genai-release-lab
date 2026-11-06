@@ -31,7 +31,7 @@ Example arm, to customize for an actual product adapter:
 }
 ```
 
-One JSON request goes to stdin per case. **Expected answers, citations, SQL rows and split are omitted**, so the adapter must obtain evidence from the product, not the goldens:
+One UTF-8 JSON request goes to stdin per case. Stdout must contain one UTF-8 JSON observation, capped at 2,000,000 bytes. The runner uses binary pipes and forces `PYTHONIOENCODING=utf-8` / `PYTHONUTF8=1` for Python callers, including Windows. Invalid UTF-8 becomes a sanitized per-case adapter error; subsequent cases continue. **Expected answers, citations, SQL rows and split are omitted**, so the adapter must obtain evidence from the product, not the goldens:
 
 ```json
 {"case":{"id":"case-01","kind":"rag","prompt":"Question","context":"Authorized context"},"arm":"glossary","options":{}}
