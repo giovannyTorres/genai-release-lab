@@ -1,0 +1,10 @@
+{
+  "dataset": "dataset.json",
+  "strata": {"single_source": "lexical", "synonym": "spanish_paraphrase", "unknown": "abstention"},
+  "provenance": {"purpose": "Contract example only; no product or model performance measured."},
+  "arms": [
+    {"name": "baseline", "execution": "fixture", "records": "fixture-records.jsonl", "provenance": {"scope": "contract_fixture_only"}},
+    {"name": "glossary", "execution": "fixture", "records": "fixture-records.jsonl", "provenance": {"scope": "contract_fixture_only"}},
+    {"name": "auto_ontology", "execution": "live", "records": "unavailable-nvidia.jsonl", "provenance": {"scope": "not_executed"}}
+  ]
+}

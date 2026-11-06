@@ -1,0 +1,19 @@
+[
+  {
+    "id": "single_source", "split": "development", "kind": "rag",
+    "prompt": "What is the domestic meal allowance?",
+    "context": "travel-v1-meals: The domestic meal allowance is 650 MXN per day.",
+    "expected": {"allowed_citations": ["travel-v1-meals"], "required_citations": ["travel-v1-meals"], "answer_contains": ["650", "MXN"]}
+  },
+  {
+    "id": "synonym", "split": "final", "kind": "rag",
+    "prompt": "¿Cuál es el límite diario para alimentos en un viaje nacional?",
+    "context": "travel-v1-meals: The domestic meal allowance is 650 MXN per day.",
+    "expected": {"allowed_citations": ["travel-v1-meals"], "required_citations": ["travel-v1-meals"], "answer_contains": ["650", "MXN"]}
+  },
+  {
+    "id": "unknown", "split": "final", "kind": "rag",
+    "prompt": "What is the lunar travel allowance?", "context": "No authorized lunar travel policy.",
+    "expected": {"allowed_citations": [], "required_citations": [], "abstain": true, "answer": "Insufficient evidence."}
+  }
+]

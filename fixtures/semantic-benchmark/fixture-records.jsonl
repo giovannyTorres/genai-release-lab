@@ -1,0 +1,3 @@
+{"case_id":"single_source","observation":{"status":"completed","execution":"fixture","output":{"answer":"650 MXN per day.","citations":["travel-v1-meals"]},"trace":[],"provenance":{"scope":"contract_fixture_only"}}}
+{"case_id":"synonym","observation":{"status":"completed","execution":"fixture","output":{"answer":"650 MXN por día.","citations":["travel-v1-meals"]},"trace":[],"provenance":{"scope":"contract_fixture_only"}}}
+{"case_id":"unknown","observation":{"status":"completed","execution":"fixture","output":{"answer":"Insufficient evidence.","citations":[]},"trace":[],"provenance":{"scope":"contract_fixture_only"}}}

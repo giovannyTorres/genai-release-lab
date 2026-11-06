@@ -18,6 +18,11 @@ from release_lab.models import Base, engine  # noqa: E402
 from release_lab.main import app  # noqa: E402
 
 
+def pytest_sessionfinish(session, exitstatus):
+    # Windows cannot remove the temporary SQLite file while pooled handles remain open.
+    engine.dispose()
+
+
 @pytest.fixture
 def client():
     from release_lab.limits import _attempts
