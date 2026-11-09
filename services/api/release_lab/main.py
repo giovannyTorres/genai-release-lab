@@ -517,6 +517,20 @@ def job(id: str, user=Depends(auth), db=Depends(database)):
         }
         for r in db.scalars(select(Review).where(Review.job_id == id).order_by(Review.created_at))
     ]
+    # Release sign-offs live in the append-only audit log; expose them so the run shows who approved.
+    result["approvals"] = [
+        {
+            "actor": a.actor,
+            "comment": a.details.get("comment", ""),
+            "results_hash": a.details.get("results_hash"),
+            "created_at": a.created_at,
+        }
+        for a in db.scalars(
+            select(Audit)
+            .where(Audit.mode == MODE, Audit.event == "release.approve", Audit.target == id)
+            .order_by(Audit.created_at)
+        )
+    ]
     return result
 
 

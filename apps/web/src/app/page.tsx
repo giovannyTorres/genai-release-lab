@@ -11,6 +11,7 @@ import {
   Comparison,
   Result,
   percentage,
+  releaseSignoff,
   shortId,
   tone,
   humanStatus,
@@ -1851,16 +1852,46 @@ export default function Home() {
                       Cancel run
                     </button>
                   )}
-                  {reviewer && job.decision === "approved" && (
-                    <button
-                      className="button primary small"
-                      onClick={() => setApproveOpen(true)}
-                    >
-                      <Icon name="shield" size={16} />
-                      Record approval
-                    </button>
-                  )}
+                  {reviewer &&
+                    job.decision === "approved" &&
+                    !job.approvals?.length && (
+                      <button
+                        className="button primary small"
+                        onClick={() => setApproveOpen(true)}
+                      >
+                        <Icon name="shield" size={16} />
+                        Record approval
+                      </button>
+                    )}
                 </div>
+                {(() => {
+                  const signoff = releaseSignoff(job);
+                  return (
+                    <div
+                      className={`inline-note signoff signoff-${signoff.tone}`}
+                      role="note"
+                      aria-label="Release sign-off"
+                    >
+                      <Icon name="shield" />
+                      <p>{signoff.text}</p>
+                    </div>
+                  );
+                })()}
+                {!!job.reviews?.length && (
+                  <div className="inline-note" aria-label="Human corrections">
+                    <Icon name="check" />
+                    <p>
+                      Human corrections ({job.reviews.length}), append-only;
+                      automated evidence is preserved:{" "}
+                      {job.reviews
+                        .map(
+                          (r) =>
+                            `${r.case_id} → ${r.verdict} by ${r.actor} (“${r.comment}”)`,
+                        )
+                        .join(" · ")}
+                    </p>
+                  </div>
+                )}
                 {approveOpen && (
                   <form
                     className="review-form"
@@ -2009,6 +2040,12 @@ export default function Home() {
             <div className="eyebrow">CASE EVIDENCE</div>
             <h2>{result.case_id}</h2>
             <Badge value={result.status} />
+            {result.prompt && (
+              <div className="case-prompt">
+                <span className="eyebrow">PROMPT UNDER TEST</span>
+                <p>{result.prompt}</p>
+              </div>
+            )}
             <div className="check-list">
               {Object.entries(result.checks).map(([name, c]) => (
                 <div key={name} className="check-item">
@@ -2024,7 +2061,7 @@ export default function Home() {
               <summary>Output under evaluation</summary>
               <pre>{JSON.stringify(result.output, null, 2)}</pre>
             </details>
-            <details>
+            <details open={result.status !== "pass"}>
               <summary>Expected evidence</summary>
               <pre>{JSON.stringify(result.expected, null, 2)}</pre>
             </details>
