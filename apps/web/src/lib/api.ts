@@ -161,3 +161,19 @@ export function releaseSignoff(job: Job): { tone: string; text: string } {
     text: `Inconclusive: ${summary?.pending ?? 0} mandatory checks have no result (for example, an LLM evaluation that needs LIVE). Release approval is blocked until evidence exists.`,
   };
 }
+/** Readable summary of a case's checks: which ones did not pass, instead of unlabeled dots. */
+export function checkSummary(checks: Record<string, Check>): {
+  tone: string;
+  text: string;
+} {
+  const entries = Object.entries(checks);
+  const name = (key: string) => {
+    const text = humanStatus(key).replace(/\bllm\b/i, "LLM");
+    return text.charAt(0).toUpperCase() + text.slice(1);
+  };
+  const failed = entries.filter(([, c]) => c.status === "fail").map(([k]) => name(k));
+  const pending = entries.filter(([, c]) => c.status === "pending").map(([k]) => name(k));
+  if (failed.length) return { tone: "fail", text: `${failed.join(", ")} failed` };
+  if (pending.length) return { tone: "pending", text: `${pending.join(", ")} pending` };
+  return { tone: "pass", text: `All ${entries.length} checks pass` };
+}

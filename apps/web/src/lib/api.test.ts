@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { api, tone, percentage, releaseSignoff, type Job } from "./api";
+import { api, tone, percentage, releaseSignoff, checkSummary, type Job } from "./api";
 afterEach(() => vi.unstubAllGlobals());
 describe("API client", () => {
   it("surfaces safe server errors", async () => {
@@ -69,5 +69,17 @@ describe("API client", () => {
     expect(
       releaseSignoff({ ...base, decision: "rejected", summary: { ...base.summary!, passed: 30, failed: 30 } }).text,
     ).toMatch(/30 of 60 cases failed/);
+  });
+  it("names the checks that did not pass", () => {
+    expect(
+      checkSummary({
+        format: { status: "pass", detail: "" },
+        references: { status: "fail", detail: "" },
+      }),
+    ).toEqual({ tone: "fail", text: "References failed" });
+    expect(
+      checkSummary({ format: { status: "pass", detail: "" }, llm_judge: { status: "pending", detail: "" } }).tone,
+    ).toBe("pending");
+    expect(checkSummary({ format: { status: "pass", detail: "" } }).text).toBe("All 1 checks pass");
   });
 });

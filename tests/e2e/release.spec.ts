@@ -11,7 +11,7 @@ async function login(page: Page, role = "operator") {
   await page.getByLabel("Workspace role").selectOption(role);
   await page.getByRole("button", { name: "Enter workspace" }).click();
   await expect(
-    page.getByRole("heading", { name: "Evaluate. Compare. Decide." }),
+    page.getByRole("heading", { name: "Evaluation runs", exact: true }),
   ).toBeVisible();
 }
 async function create(
@@ -108,7 +108,7 @@ test("reference → regression → paired comparison → evidence → reviewer a
   await page.getByLabel("Workspace role").selectOption("reviewer");
   await page.getByRole("button", { name: "Enter workspace" }).click();
   await expect(
-    page.getByRole("heading", { name: "Evaluate. Compare. Decide." }),
+    page.getByRole("heading", { name: "Evaluation runs", exact: true }),
   ).toBeVisible();
   await expect(
     page.getByRole("button", { name: "New evaluation", exact: true }),
