@@ -134,7 +134,7 @@ label {
   font-weight: 500;
   color: var(--ink-2);
 }
-input,
+input:not([type="checkbox"]):not([type="radio"]),
 select,
 textarea {
   width: 100%;
@@ -155,8 +155,9 @@ textarea {
 input:focus,
 select:focus,
 textarea:focus {
-  outline: none;
   border-color: var(--ink);
+  outline: 1px solid var(--ink);
+  outline-offset: 0;
 }
 summary {
   cursor: pointer;
@@ -377,6 +378,13 @@ code {
 .app-shell {
   display: flex;
   min-height: 100vh;
+  /* Continue the fixed sidebar column and its rule on long pages. */
+  background: linear-gradient(
+    to right,
+    var(--paper-2) calc(var(--sidebar) - 1px),
+    var(--rule) calc(var(--sidebar) - 1px) var(--sidebar),
+    transparent var(--sidebar)
+  );
 }
 .sidebar {
   position: fixed;
@@ -879,9 +887,8 @@ tbody tr:hover {
   display: flex;
   justify-content: space-between;
   gap: 16px;
-  max-width: 1240px;
-  margin: 0 auto;
-  padding: 16px 40px 32px;
+  margin-top: 40px;
+  padding: 16px 0 0;
   border-top: 1px solid var(--rule);
   font-size: 12px;
   color: var(--ink-3);
@@ -1560,6 +1567,12 @@ tbody tr:hover {
   .compare-arrow {
     display: none;
   }
+  .config-row {
+    flex-wrap: wrap;
+  }
+  .config-row > .badge {
+    margin-left: 0;
+  }
 }
 @media (max-width: 650px) {
   :root {
@@ -1609,7 +1622,6 @@ tbody tr:hover {
   }
   .workspace-footer {
     flex-direction: column;
-    padding: 16px;
   }
   td,
   th {
