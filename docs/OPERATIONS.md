@@ -25,7 +25,7 @@ The optional override mounts the combined `/etc/ssl/certs/ca-certificates.crt` (
 5. Configure `require_llm: true`, a rubric, rubric_version, provider and model to enable the optional structured judge. Without credentials, imported outputs still run deterministic checks but remain inconclusive when the judge is mandatory. DEMO always leaves the judge pending regardless of environment keys.
 6. Optional registered endpoint: set `ENDPOINT_ALLOWED_HOSTS=your.public.example`, then authenticated operator POST `/api/endpoints` with `{name,url}`. Exact HTTPS hosts on port443 only. DNS must contain exclusively globally routable addresses. Each invocation revalidates and pins a resolved IP with original TLS SNI and Host. Redirects, private/mapped networks and responses over256KB are blocked. Endpoint receives `{case_id,prompt,context}` and must return the Output JSON schema in OpenAPI. No per-endpoint authentication is currently supported; deploy a narrowly accessible evaluation endpoint or extend explicit credential references before connecting a protected service.
 
-Real smoke commands (may incur provider charges; **not run during construction**):
+Real smoke commands (may incur provider charges; **not run during construction and both skipped in the recorded 2026-11-10 hosted CI run**; see [verification evidence](VERIFICATION.md#hosted-github-actions--2026-11-10-utc)):
 
 ```bash
 RUN_LIVE=1 uv run pytest -q -m live tests/test_live.py -k openai
@@ -34,7 +34,7 @@ RUN_LIVE=1 uv run pytest -q -m live tests/test_live.py -k gemini
 
 Request controls: `MODEL_TIMEOUT_SECONDS` (1–25 seconds per attempt), `MODEL_MAX_OUTPUT_TOKENS` (1–8192), `MODEL_MAX_RETRIES` (0–1), and `MODEL_CONCURRENCY` (default2). An overall55-second deadline bounds each structured request; no unbounded retries. Only structured generation is exposed because this product does not need tool execution or token streaming.
 
-Provider models can change availability. `LIVE_SMOKE_MODEL` overrides the test model for the selected provider. Normal tests use simulated transports and skip these tests. No external credentials are needed by CI.
+Provider models can change availability. `LIVE_SMOKE_MODEL` overrides the test model for the selected provider. Normal tests use simulated transports and skip these tests. No external credentials are needed by CI. These smokes check connectivity and a structured response only; model quality needs a separate evaluation using real outputs and a suitable dataset and rubric.
 
 ## Azure Container Apps configuration
 
@@ -51,7 +51,7 @@ See [audit.md](audit.md) for a clean isolated Compose project, exact commands an
 
 Only `TEST_DATABASE_URL` selects the destructive test database, and its name must end `_test`; ordinary `DATABASE_URL` is not used by tests. At most five evaluations may be queued/running per operator, with PostgreSQL admission locking. Login throttling is bounded per process, not distributed. Uvicorn and HTTP-client query-bearing request lines are disabled; structured path-only events remain, and OpenTelemetry URL attributes omit query strings.
 
-Evaluator `deterministic-1.1.0` binds versioned inputs and exact JSON argument types. Unfinished jobs created under an earlier evaluator fail safely and must be recreated; a retry never silently mixes evaluator versions. Missing or non-completed model responses cannot become valid results merely because their text parses. Graceful worker stop saves progress and releases its lease; abrupt failure still relies on the 120-second expiry.
+Evaluator `deterministic-1.2.0` binds versioned inputs and exact JSON argument types. Version 1.2.0 keeps every pass/fail rule of 1.1.0 and adds the case prompt and the concrete mismatch (disallowed or missing citations, missing facts, expected versus observed abstention, first differing tool call) to failed check details. Unfinished jobs created under an earlier evaluator fail safely and must be recreated; a retry never silently mixes evaluator versions. Missing or non-completed model responses cannot become valid results merely because their text parses. Graceful worker stop saves progress and releases its lease; abrupt failure still relies on the 120-second expiry.
 
 Comparison requires equal case IDs **and** canonical case contracts; pending outputs do not create measured regressions or zero-point deltas. Different evaluation configurations/versions are explicitly warned. The default demo gate aggregates all 60 cases with split counts; for a final-only release decision, import a versioned dataset containing only the final split. These small synthetic patterns are not evidence of model generalization. Deterministic fact matching uses token boundaries, not semantic judgment.
 

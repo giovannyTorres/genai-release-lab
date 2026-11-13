@@ -85,7 +85,9 @@ def test_full_persistent_gate_export_and_approval(operator):
         == 200
     )
     assert operator.post(f"/api/jobs/{id}/approve", json={"comment": "Ready for release"}).status_code == 200
-    assert len(operator.get(f"/api/jobs/{id}").json()["reviews"]) == 1
+    detail = operator.get(f"/api/jobs/{id}").json()
+    assert len(detail["reviews"]) == 1
+    assert [(a["actor"], a["comment"]) for a in detail["approvals"]] == [("reviewer", "Ready for release")]
     for fmt in ["json", "junit", "html"]:
         assert operator.get(f"/api/jobs/{id}/export?format={fmt}").status_code == 200
     assert any(a["event"] == "release.approve" for a in operator.get("/api/audit").json())
@@ -95,7 +97,8 @@ def test_regression_rejected_and_mandatory_llm_pending(operator, monkeypatch):
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     id = submit(operator, "regression").json()["id"]
     run_job(id)
-    assert operator.get("/api/jobs/" + id).json()["decision"] == "rejected"
+    rejected = operator.get("/api/jobs/" + id).json()
+    assert rejected["decision"] == "rejected" and rejected["approvals"] == []
     pending = submit(operator, "reference", 1).json()["id"]
     run_job(pending)
     job = operator.get("/api/jobs/" + pending).json()
@@ -229,3 +232,20 @@ def test_pending_authorization_blocks_even_tolerant_gate():
     result = evaluate(CASES[1], raw)
     assert result["status"] == "pending"
     assert summarize([result], threshold=0)["decision"] == "inconclusive"
+
+
+def test_failed_checks_explain_the_concrete_mismatch():
+    by_id = {c["id"]: c for c in CASES}
+    results = {r["case_id"]: evaluate(by_id[r["case_id"]], r["output"]) for r in REGRESSION}
+    rag = results["case-001"]
+    assert rag["prompt"] == by_id["case-001"]["prompt"]
+    assert rag["checks"]["references"]["status"] == "fail"
+    assert 'Not allowed: ["missing-document#invented"]' in rag["checks"]["references"]["detail"]
+    failed_tools = [r for r in results.values() if r["checks"].get("arguments", {}).get("status") == "fail"]
+    assert failed_tools and all("First difference at call" in r["checks"]["arguments"]["detail"] for r in failed_tools)
+    # Passing checks keep the original, stable wording.
+    good = evaluate(by_id["case-001"], REFERENCE[0]["output"])
+    assert good["checks"]["references"] == {
+        "status": "pass",
+        "detail": "Every citation must be allowed and required references present",
+    }

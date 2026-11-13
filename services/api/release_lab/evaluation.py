@@ -6,7 +6,12 @@ import re
 from pydantic import ValidationError
 from .schemas import Case, Output
 
-EVALUATOR_VERSION = "deterministic-1.1.0"
+EVALUATOR_VERSION = "deterministic-1.2.0"
+
+
+def _shown(value, limit=160):
+    text = json.dumps(value, sort_keys=True, ensure_ascii=False)
+    return text if len(text) <= limit else text[: limit - 1] + "…"
 
 
 def digest(value):
@@ -15,8 +20,9 @@ def digest(value):
     ).hexdigest()
 
 
-def check(ok, detail):
-    return {"status": "pass" if ok else "fail", "detail": detail}
+def check(ok, detail, failure=""):
+    # Failed checks name the concrete mismatch so a reviewer can see what was expected and observed.
+    return {"status": "pass" if ok else "fail", "detail": detail if ok or not failure else f"{detail}. {failure}"}
 
 
 def evaluate(case: dict, raw: dict | None):
@@ -26,6 +32,7 @@ def evaluate(case: dict, raw: dict | None):
         return {
             "case_id": case.id,
             "split": case.split,
+            "prompt": case.prompt,
             "status": "pending",
             "checks": {"output": {"status": "pending", "detail": "Output missing"}},
             "output": None,
@@ -38,6 +45,7 @@ def evaluate(case: dict, raw: dict | None):
         return {
             "case_id": case.id,
             "split": case.split,
+            "prompt": case.prompt,
             "status": "fail",
             "checks": {"format": check(False, "Output schema validation failed")},
             "output": raw,
@@ -47,28 +55,55 @@ def evaluate(case: dict, raw: dict | None):
     if case.kind == "rag":
         allowed = set(expected.get("allowed_citations", []))
         required = set(expected.get("required_citations", []))
+        unexpected = sorted(set(output.citations) - allowed)
+        missing = sorted(required - set(output.citations))
         checks["references"] = check(
-            set(output.citations) <= allowed and required <= set(output.citations),
+            not unexpected and not missing,
             "Every citation must be allowed and required references present",
+            f"Not allowed: {_shown(unexpected)}; missing required: {_shown(missing)}",
         )
         if expected.get("abstain"):
-            checks["abstention"] = check(output.answer == expected["answer"], "Expected explicit abstention")
+            checks["abstention"] = check(
+                output.answer == expected["answer"],
+                "Expected explicit abstention",
+                f"Expected {_shown(expected['answer'])}; observed {_shown(output.answer)}",
+            )
         else:
+            absent = [
+                x
+                for x in expected.get("answer_contains", [])
+                if re.search(r"(?<!\w)" + re.escape(x) + r"(?!\w)", output.answer, re.IGNORECASE) is None
+            ]
             checks["answer"] = check(
-                all(
-                    re.search(r"(?<!\w)" + re.escape(x) + r"(?!\w)", output.answer, re.IGNORECASE) is not None
-                    for x in expected.get("answer_contains", [])
-                ),
+                not absent,
                 "Required fixture facts present; this is not a semantic model-quality score",
+                f"Missing facts: {_shown(absent)}",
             )
     if case.kind == "agent":
         expected_calls = expected.get("tool_calls", [])
         actual = [c.model_dump() for c in output.tool_calls]
+        expected_names, actual_names = [x["name"] for x in expected_calls], [x["name"] for x in actual]
         checks["tools"] = check(
-            [x["name"] for x in actual] == [x["name"] for x in expected_calls], "Expected ordered tool names"
+            actual_names == expected_names,
+            "Expected ordered tool names",
+            f"Expected {_shown(expected_names)}; observed {_shown(actual_names)}",
+        )
+        position = next(
+            (
+                i
+                for i in range(max(len(actual), len(expected_calls)))
+                if i >= len(actual) or i >= len(expected_calls) or digest(actual[i]) != digest(expected_calls[i])
+            ),
+            None,
         )
         checks["arguments"] = check(
-            digest(actual) == digest(expected_calls), "Exact typed arguments and tool sequence"
+            digest(actual) == digest(expected_calls),
+            "Exact typed arguments and tool sequence",
+            ""
+            if position is None
+            else f"First difference at call {position + 1}: expected "
+            f"{_shown(expected_calls[position] if position < len(expected_calls) else None)}; "
+            f"observed {_shown(actual[position] if position < len(actual) else None)}",
         )
         if expected.get("authorization_required"):
             auth = output.authorization
@@ -90,6 +125,7 @@ def evaluate(case: dict, raw: dict | None):
     return {
         "case_id": case.id,
         "split": case.split,
+        "prompt": case.prompt,
         "status": status,
         "checks": checks,
         "output": output.model_dump(),

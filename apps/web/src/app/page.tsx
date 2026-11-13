@@ -11,6 +11,8 @@ import {
   Comparison,
   Result,
   percentage,
+  checkSummary,
+  releaseSignoff,
   shortId,
   tone,
   humanStatus,
@@ -107,12 +109,12 @@ function Brand() {
       <span className="brand-mark">
         <svg viewBox="0 0 32 32" aria-hidden="true">
           <path d="M7 5h18v7H14v8h11v7H7V5Z" fill="currentColor" />
-          <path d="M18 15h7v12h-7z" fill="#e6ae54" />
+          <path className="brand-accent" d="M18 15h7v12h-7z" />
         </svg>
       </span>
       <span>
         RELEASE <strong>LAB</strong>
-        <small>GENAI QUALITY WORKSPACE</small>
+        <small>GenAI quality workspace</small>
       </span>
     </div>
   );
@@ -455,7 +457,6 @@ export default function Home() {
         <section className="login-story">
           <Brand />
           <div>
-            <span className="eyebrow">EVIDENCE BEFORE RELEASE</span>
             <h1>
               Better releases
               <br />
@@ -473,7 +474,7 @@ export default function Home() {
             </div>
           </div>
           <span className="login-foot">
-            FICTIONAL ORGANIZATION · ORIGINAL SYNTHETIC DATA
+            Fictional organization · original synthetic data
           </span>
         </section>
         <section className="login-form-area">
@@ -591,7 +592,7 @@ export default function Home() {
             Northstar Sandbox<small>Evaluation workspace</small>
           </span>
         </div>
-        <div className="nav-label">WORKSPACE</div>
+        <div className="nav-label">Workspace</div>
         <nav aria-label="Main navigation">
           <button
             className={tab === "runs" ? "nav-item active" : "nav-item"}
@@ -619,12 +620,6 @@ export default function Home() {
           </button>
         </nav>
         <div className="sidebar-bottom">
-          <div className="trust-box">
-            <Icon name="shield" size={22} />
-            <strong>Evidence is the gate.</strong>
-            <p>A required check without a result blocks release approval.</p>
-            <span>POLICY ENFORCED BY SERVER</span>
-          </div>
           <div className="profile">
             <div className="avatar">{user.username[0].toUpperCase()}</div>
             <div>
@@ -667,20 +662,19 @@ export default function Home() {
         <main id="main" className="main-content">
           <div className="page-heading">
             <div>
-              <div className="eyebrow">RELEASE CONFIDENCE, MADE VISIBLE</div>
               <h1>
                 {tab === "runs"
-                  ? "Evaluate. Compare. Decide."
+                  ? "Evaluation runs"
                   : tab === "datasets"
-                    ? "A stronger test foundation."
-                    : "Every change leaves evidence."}
+                    ? "Datasets and release policies"
+                    : "Compare versions"}
               </h1>
               <p>
                 {tab === "runs"
-                  ? "Turn evaluation results into clear, traceable release decisions."
+                  ? "Each run checks one version against a versioned dataset and release policy. Release approval needs every mandatory check to have a result."
                   : tab === "datasets"
-                    ? "Versioned cases with expectations you can inspect and reproduce."
-                    : "Pair the same cases to see what improved, what regressed, and what is missing."}
+                    ? "Versioned cases with expectations you can inspect and reproduce, and the rules a release must meet."
+                    : "Runs are paired on identical case contracts: what improved, what regressed and what is missing."}
               </p>
             </div>
             {operator && (
@@ -753,9 +747,8 @@ export default function Home() {
                 <div className="metric">
                   <div>
                     <span>Evaluation runs</span>
-                    <Icon name="grid" />
                   </div>
-                  <strong>{jobs.length.toString().padStart(2, "0")}</strong>
+                  <strong>{jobs.length}</strong>
                   <small>
                     {completed.length} completed
                     {activeJobs.length > 0
@@ -766,30 +759,26 @@ export default function Home() {
                 <div className="metric">
                   <div>
                     <span>Release gates passed</span>
-                    <span className="mini-dot green" />
                   </div>
                   <strong>
                     {jobs
                       .filter((j) => j.decision === "approved")
-                      .length.toString()
-                      .padStart(2, "0")}
+                      .length}
                   </strong>
                   <small>All required checks satisfied</small>
                 </div>
                 <div className="metric">
                   <div>
                     <span>Regressions caught</span>
-                    <span className="mini-dot red" />
                   </div>
-                  <strong>{rejected.length.toString().padStart(2, "0")}</strong>
+                  <strong>{rejected.length}</strong>
                   <small>Runs blocked by release policy</small>
                 </div>
                 <div className="metric">
                   <div>
                     <span>Needs more evidence</span>
-                    <span className="mini-dot amber" />
                   </div>
-                  <strong>{pending.length.toString().padStart(2, "0")}</strong>
+                  <strong>{pending.length}</strong>
                   <small>Inconclusive release decisions</small>
                 </div>
               </section>
@@ -797,12 +786,9 @@ export default function Home() {
                 <div className="section-heading">
                   <div>
                     <h2>
-                      Evaluation runs{" "}
+                      All runs{" "}
                       <span className="count-pill">{jobs.length}</span>
                     </h2>
-                    <p>
-                      Every result has a source. Every release has a record.
-                    </p>
                   </div>
                   <div className="row-actions">
                     {operator && (
@@ -839,11 +825,11 @@ export default function Home() {
                     <table>
                       <thead>
                         <tr>
-                          <th>RUN / VERSION</th>
-                          <th>EXECUTION</th>
-                          <th>CHECKS PASSED</th>
-                          <th>RELEASE GATE</th>
-                          <th>CREATED</th>
+                          <th>Run / version</th>
+                          <th>Execution</th>
+                          <th>Checks passed</th>
+                          <th>Release gate</th>
+                          <th>Created</th>
                           <th>
                             <span className="sr-only">Details</span>
                           </th>
@@ -936,43 +922,9 @@ export default function Home() {
                 </div>
               </section>
               <div className="bottom-grid">
-                <section className="starter-card">
-                  <span className="eyebrow">A TWO-MINUTE WALKTHROUGH</span>
-                  <h3>
-                    Find the regression.
-                    <br />
-                    Hold the release.
-                  </h3>
-                  <p>
-                    Compare a reference fixture with deliberately broken
-                    citations and tool arguments. Inspect the exact cases behind
-                    the decision.
-                  </p>
-                  <button
-                    className="text-button"
-                    onClick={() => setTab("compare")}
-                  >
-                    Explore comparisons
-                    <Icon name="arrow" size={18} />
-                  </button>
-                  <div className="diagram" aria-hidden="true">
-                    <span>
-                      <Icon name="file" />
-                    </span>
-                    <i />
-                    <span>
-                      <Icon name="compare" />
-                    </span>
-                    <i />
-                    <span className="diagram-check">
-                      <Icon name="shield" />
-                    </span>
-                  </div>
-                </section>
                 <section className="policy-card">
                   <div className="section-heading">
-                    <h3>What does the gate check?</h3>
-                    <Icon name="shield" size={21} />
+                    <h3>What the release gate checks</h3>
                   </div>
                   <div className="policy-row">
                     <span>Deterministic checks</span>
@@ -1276,10 +1228,10 @@ export default function Home() {
                         <table>
                           <thead>
                             <tr>
-                              <th>CASE</th>
-                              <th>BASELINE</th>
-                              <th>CANDIDATE</th>
-                              <th>CHANGE</th>
+                              <th>Case</th>
+                              <th>Baseline</th>
+                              <th>Candidate</th>
+                              <th>Change</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -1345,7 +1297,7 @@ export default function Home() {
             </>
           )}
           <footer className="workspace-footer">
-            <span>GENAI RELEASE LAB</span>
+            <span>GenAI Release Lab</span>
             <span>
               Original synthetic data · No regulatory compliance claim
             </span>
@@ -1397,8 +1349,7 @@ export default function Home() {
             )}
             {createOpen && (
               <>
-                <div className="eyebrow">NEW EVALUATION</div>
-                <h2>Put the release to the test.</h2>
+                <h2>New evaluation</h2>
                 <p className="muted">
                   {mode === "LIVE"
                     ? "Execute the configured model API or an endpoint registered by an authorized operator."
@@ -1513,8 +1464,7 @@ export default function Home() {
             )}
             {configOpen && (
               <>
-                <div className="eyebrow">VERSIONED RELEASE CONFIGURATION</div>
-                <h2>Define what ready means.</h2>
+                <h2>New release policy version</h2>
                 <p className="muted">
                   Create an immutable policy version. Each evaluation records
                   its exact configuration and hash.
@@ -1648,7 +1598,7 @@ export default function Home() {
             )}
             {importOpen && (
               <>
-                <div className="eyebrow">VALIDATED IMPORT</div>
+                <div className="eyebrow">Validated import</div>
                 <h2>
                   {importKind === "dataset"
                     ? "Add a dataset version."
@@ -1748,7 +1698,7 @@ export default function Home() {
             )}
             {dataset && (
               <>
-                <div className="eyebrow">DATASET VERSION {dataset.version}</div>
+                <div className="eyebrow">Dataset version {dataset.version}</div>
                 <h2>{dataset.name}</h2>
                 <p className="muted">
                   {dataset.case_count} cases · immutable content hash
@@ -1758,9 +1708,9 @@ export default function Home() {
                   <table>
                     <thead>
                       <tr>
-                        <th>CASE</th>
-                        <th>SPLIT</th>
-                        <th>PROMPT</th>
+                        <th>Case</th>
+                        <th>Split</th>
+                        <th>Prompt</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1782,7 +1732,7 @@ export default function Home() {
             )}
             {job && (
               <>
-                <div className="eyebrow">EVALUATION / {shortId(job.id)}</div>
+                <div className="eyebrow">Evaluation · {shortId(job.id)}</div>
                 <div className="job-title">
                   <h2>{job.label}</h2>
                   <Badge value={job.decision || "pending"} />
@@ -1851,16 +1801,46 @@ export default function Home() {
                       Cancel run
                     </button>
                   )}
-                  {reviewer && job.decision === "approved" && (
-                    <button
-                      className="button primary small"
-                      onClick={() => setApproveOpen(true)}
-                    >
-                      <Icon name="shield" size={16} />
-                      Record approval
-                    </button>
-                  )}
+                  {reviewer &&
+                    job.decision === "approved" &&
+                    !job.approvals?.length && (
+                      <button
+                        className="button primary small"
+                        onClick={() => setApproveOpen(true)}
+                      >
+                        <Icon name="shield" size={16} />
+                        Record approval
+                      </button>
+                    )}
                 </div>
+                {(() => {
+                  const signoff = releaseSignoff(job);
+                  return (
+                    <div
+                      className={`inline-note signoff signoff-${signoff.tone}`}
+                      role="note"
+                      aria-label="Release sign-off"
+                    >
+                      <Icon name="shield" />
+                      <p>{signoff.text}</p>
+                    </div>
+                  );
+                })()}
+                {!!job.reviews?.length && (
+                  <div className="inline-note" aria-label="Human corrections">
+                    <Icon name="check" />
+                    <p>
+                      Human corrections ({job.reviews.length}), append-only;
+                      automated evidence is preserved:{" "}
+                      {job.reviews
+                        .map(
+                          (r) =>
+                            `${r.case_id} → ${r.verdict} by ${r.actor} (“${r.comment}”)`,
+                        )
+                        .join(" · ")}
+                    </p>
+                  </div>
+                )}
                 {approveOpen && (
                   <form
                     className="review-form"
@@ -1905,10 +1885,10 @@ export default function Home() {
                     <table className="result-table">
                       <thead>
                         <tr>
-                          <th>CASE</th>
-                          <th>SPLIT</th>
-                          <th>CHECKS</th>
-                          <th>RESULT</th>
+                          <th>Case</th>
+                          <th>Split</th>
+                          <th>Checks</th>
+                          <th>Result</th>
                           <th />
                         </tr>
                       </thead>
@@ -1925,21 +1905,22 @@ export default function Home() {
                               >
                                 {r.case_id}
                               </button>
+                              {r.prompt && (
+                                <span className="case-prompt-line">{r.prompt}</span>
+                              )}
                             </td>
                             <td>
                               <span className="split-tag">{r.split}</span>
                             </td>
                             <td>
-                              <div className="check-dots">
-                                {Object.entries(r.checks).map(([key, c]) => (
-                                  <span
-                                    key={key}
-                                    title={`${key}: ${c.status}`}
-                                    aria-label={`${key}: ${c.status}`}
-                                    className={`check-dot ${tone(c.status)}`}
-                                  />
-                                ))}
-                              </div>
+                              {(() => {
+                                const summary = checkSummary(r.checks);
+                                return (
+                                  <span className={`check-summary ${summary.tone}`}>
+                                    {summary.text}
+                                  </span>
+                                );
+                              })()}
                             </td>
                             <td>
                               <Badge value={r.status} />
@@ -2006,9 +1987,15 @@ export default function Home() {
             >
               <Icon name="close" />
             </button>
-            <div className="eyebrow">CASE EVIDENCE</div>
+            <div className="eyebrow">Case evidence</div>
             <h2>{result.case_id}</h2>
             <Badge value={result.status} />
+            {result.prompt && (
+              <div className="case-prompt">
+                <span className="eyebrow">Prompt under test</span>
+                <p>{result.prompt}</p>
+              </div>
+            )}
             <div className="check-list">
               {Object.entries(result.checks).map(([name, c]) => (
                 <div key={name} className="check-item">
@@ -2024,7 +2011,7 @@ export default function Home() {
               <summary>Output under evaluation</summary>
               <pre>{JSON.stringify(result.output, null, 2)}</pre>
             </details>
-            <details>
+            <details open={result.status !== "pass"}>
               <summary>Expected evidence</summary>
               <pre>{JSON.stringify(result.expected, null, 2)}</pre>
             </details>

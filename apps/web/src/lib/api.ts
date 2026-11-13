@@ -32,6 +32,7 @@ export type Check = { status: string; detail: string };
 export type Result = {
   case_id: string;
   split: string;
+  prompt?: string;
   status: string;
   checks: Record<string, Check>;
   output: unknown;
@@ -56,7 +57,17 @@ export type Job = {
   };
   results?: Result[];
   error?: string;
+  approvals?: Approval[];
+  reviews?: HumanReview[];
   [key: string]: unknown;
+};
+export type Approval = { actor: string; comment: string; created_at: string };
+export type HumanReview = {
+  case_id: string;
+  verdict: string;
+  comment: string;
+  actor: string;
+  created_at: string;
 };
 export type Comparison = {
   baseline_id: string;
@@ -118,4 +129,51 @@ export function shortId(id: string) {
 }
 export function humanStatus(value: string | undefined) {
   return (value || "pending").replaceAll("_", " ");
+}
+/** Explains the release state: automated gate decision first, then the human sign-off it allows. */
+export function releaseSignoff(job: Job): { tone: string; text: string } {
+  const approvals = job.approvals ?? [];
+  const summary = job.summary;
+  if (job.status !== "completed")
+    return {
+      tone: "pending",
+      text: "Evaluation in progress. Release approval is available only after a completed run.",
+    };
+  if (job.decision === "approved" && approvals.length) {
+    const last = approvals[approvals.length - 1];
+    return {
+      tone: "pass",
+      text: `Release approved by ${last.actor} on ${new Date(last.created_at).toLocaleString()}: “${last.comment}”`,
+    };
+  }
+  if (job.decision === "approved")
+    return {
+      tone: "pending",
+      text: "Automated gate passed. A reviewer still has to record the release approval.",
+    };
+  if (job.decision === "rejected")
+    return {
+      tone: "fail",
+      text: `Rejected by the release gate: ${summary?.failed ?? 0} of ${summary?.total ?? job.total} cases failed. Release approval is blocked.`,
+    };
+  return {
+    tone: "pending",
+    text: `Inconclusive: ${summary?.pending ?? 0} mandatory checks have no result (for example, an LLM evaluation that needs LIVE). Release approval is blocked until evidence exists.`,
+  };
+}
+/** Readable summary of a case's checks: which ones did not pass, instead of unlabeled dots. */
+export function checkSummary(checks: Record<string, Check>): {
+  tone: string;
+  text: string;
+} {
+  const entries = Object.entries(checks);
+  const name = (key: string) => {
+    const text = humanStatus(key).replace(/\bllm\b/i, "LLM");
+    return text.charAt(0).toUpperCase() + text.slice(1);
+  };
+  const failed = entries.filter(([, c]) => c.status === "fail").map(([k]) => name(k));
+  const pending = entries.filter(([, c]) => c.status === "pending").map(([k]) => name(k));
+  if (failed.length) return { tone: "fail", text: `${failed.join(", ")} failed` };
+  if (pending.length) return { tone: "pending", text: `${pending.join(", ")} pending` };
+  return { tone: "pass", text: `All ${entries.length} checks pass` };
 }

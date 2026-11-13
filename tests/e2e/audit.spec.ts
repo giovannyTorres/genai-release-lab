@@ -84,7 +84,7 @@ async function evaluate(
 async function compare(page: Page, baseline: string, candidate: string) {
   await page.goto("/");
   await expect(
-    page.getByRole("heading", { name: "Evaluate. Compare. Decide." }),
+    page.getByRole("heading", { name: "Evaluation runs", exact: true }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Compare versions" }).click();
   await expect(
@@ -197,7 +197,7 @@ test("mobile import shows a real validation error and recovers with keyboard foc
   const suite = await dataset(page.request, cases);
   await page.goto("/");
   await expect(
-    page.getByRole("heading", { name: "Evaluate. Compare. Decide." }),
+    page.getByRole("heading", { name: "Evaluation runs", exact: true }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Compare versions" }).click();
   await expect(

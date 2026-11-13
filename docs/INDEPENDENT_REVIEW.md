@@ -1,4 +1,4 @@
-> Historical construction review. The current independent HTTP checks and corrections are recorded in [audit.md](audit.md).
+> Historical construction review. The subsequent local HTTP checks and corrections are recorded in [audit.md](audit.md). Later hosted CI evidence is recorded separately in [VERIFICATION.md](VERIFICATION.md#hosted-github-actions--2026-11-10-utc); it does not establish real-model quality or repeat every manual review check below.
 
 # Independent local review
 

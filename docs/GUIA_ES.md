@@ -1,5 +1,16 @@
 # Guía en español
 
+## Resumen del producto
+
+- **Qué es:** un banco de evaluación para decidir si una versión de un asistente de IA puede liberarse: compara una referencia y una candidata en los mismos casos, muestra cada regresión y por qué falló, y bloquea la aprobación cuando falta evidencia obligatoria.
+- **Para quién:** responsable técnico, evaluador o líder de producto.
+- **Problema que resuelve:** un cambio de modelo, prompt o configuración puede degradar el comportamiento sin que nadie lo note.
+- **Qué es simulado:** en DEMO las salidas evaluadas provienen de dos **fixtures**: una referencia diseñada para pasar y una regresión con 30 salidas rotas a propósito. Los resultados prueban el flujo de software; **no miden la calidad de ningún modelo**. El juez LLM nunca se simula: en DEMO queda *pending* y la decisión es *inconclusive*.
+- **Qué requiere un proveedor real:** LIVE con adaptadores OpenAI/Gemini o endpoints HTTPS autorizados y el juez LLM. No verificado contra servicios reales.
+- **Límites:** datos sintéticos, cuentas locales, comprobaciones deterministas (no evaluación semántica).
+
+**Recorrido de dos minutos:** (1) entrar como *operator* y crear una evaluación con *Reference · expected behavior* (60/60, *Approved*, falta la firma humana); (2) otra con *Regression · deliberate failures* (30/60, *Rejected*); (3) abrir *case-001*: pregunta bajo prueba, comprobación *References* fallida con la cita no permitida, salida y evidencia esperada; (4) *Compare versions*: 60 casos emparejados, 30 regresiones; (5) evaluar la referencia con la política *Grounding required · LLM required*: *Inconclusive*, aprobación bloqueada; (6) entrar como *reviewer*, abrir la referencia y *Record approval*: queda registrada con revisor, fecha y nota.
+
 GenAI Release Lab permite decidir si una versión puede liberarse con la evidencia disponible. Aster Systems es una organización ficticia; Northstar Sandbox es el nombre de su espacio en la interfaz. Los casos y respuestas incluidos son sintéticos y originales.
 
 ## Instalar y arrancar
@@ -47,6 +58,8 @@ make quickcheck
 El resultado esperado es **5 passed**. Reutiliza pruebas existentes de fixtures, persistencia, exportación, autorización, evaluaciones pendientes y códigos de salida reales de la CLI. El comando fuerza SQLite temporal: no necesita una base externa, servidor ni credenciales. Los códigos CLI son **0 aprobado**, **2 rechazado**, **3 inconcluso** y **4 entrada inválida**; la prueba reconoce los rechazos deliberados como resultados esperados.
 
 Para la validación completa, el [README](../README.md#full-development-checks) documenta lint, tipos, backend, frontend, build, instalación de Chromium y Playwright. Las pruebas PostgreSQL solo aceptan una base desechable mediante `TEST_DATABASE_URL`, cuyo nombre termina en `_test`; nunca use la base de la aplicación. El [registro de auditoría](audit.md) contiene los comandos aislados y la evidencia de ejecución.
+
+La auditoría local del **2026-11-05** registró **112 pruebas backend y 6 frontend**. Posteriormente, la [ejecución hospedada de GitHub Actions del 2026-11-10 UTC](https://github.com/giovannyTorres/genai-release-lab/actions/runs/42730793669) terminó con los tres trabajos satisfactorios: **113 backend aprobadas y 2 LIVE omitidas, 8 frontend aprobadas y 11 Playwright aprobadas**. Corresponde a la PR #2 con head `d46515f`; Actions probó el merge temporal `a7771f0`. Son ejecuciones distintas: se conservan ambas cifras y sus [enlaces y límites de evidencia](VERIFICATION.md#hosted-github-actions--2026-11-10-utc). Tres pruebas de navegador simulan respuestas de modo/autenticación; ninguna acredita inferencia real. El CI no subió un artefacto de navegador porque la ruta configurada no contenía archivos.
 
 ## LIVE y límites de la demostración
 

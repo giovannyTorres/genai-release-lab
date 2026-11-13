@@ -1,10 +1,48 @@
 # GenAI Release Lab
 
-A release-evaluation workbench for the fictional **Aster Systems** organization, shown in the UI as the **Northstar Sandbox** workspace. Import or execute outputs, inspect failures, compare compatible cases and enforce release gates. All included cases and responses are original synthetic material; their results are software checks, not model-quality or regulatory-compliance claims.
+**Decide whether a new version of an AI assistant is ready to ship: evaluate a reference and a candidate on the same cases, see exactly which cases regressed and why, and keep approval blocked while required evidence is missing.**
 
 ![Actual paired comparison with synthetic fixture outputs](docs/screenshots/comparison-desktop.png)
 
-Next.js/React/TypeScript frontend, FastAPI backend, PostgreSQL and a durable worker. The [technical audit](docs/audit.md) records reproduced defects, corrections, real browser captures and clean Docker verification. [Leer en español](docs/GUIA_ES.md).
+## Product at a glance
+
+| Question | Answer |
+|---|---|
+| **What is it?** | A release-evaluation workbench for the fictional **Aster Systems** organization (workspace *Northstar Sandbox*). It versions evaluation datasets and release policies, runs evaluations in a durable worker, compares runs case by case, shows the evidence behind each result and records human review and release approval. |
+| **Who is it for?** | A tech lead, evaluator or product lead who must decide whether a model, prompt or configuration change has enough evidence to continue. |
+| **What problem does it solve?** | Changing a model, prompt or configuration can degrade behaviour without anyone noticing. The team needs to compare results on identical cases, inspect each failure and avoid approving a version while critical checks have no result. |
+| **What can it do today?** | 60 synthetic cases (40 development, 20 final) covering RAG answers and agent tool calls. Deterministic checks for output schema, allowed and required citations, explicit abstention, required facts, ordered tool calls with exact typed arguments and trusted authorization traces. Gate decision *approved*, *rejected* or *inconclusive*; paired comparison of identical case contracts; failed checks state the concrete mismatch; JSON, JUnit and HTML exports; reviewer approval with note, actor and time; append-only human corrections; operator, reviewer and viewer roles enforced by the backend. |
+| **What is simulated?** | In DEMO the evaluated outputs come from two **fixture files**: a reference designed to pass and a regression with 30 deliberately broken outputs. The results test the release workflow; **they are not a measurement of any model's quality**. The LLM judge is never simulated: in DEMO it stays *pending*, which keeps the decision *inconclusive*. |
+| **What needs a real model provider?** | LIVE runs official OpenAI Responses or Gemini SDK adapters, or authorized registered HTTPS endpoints, plus the LLM judge. API keys are required and **real service acceptance and model quality remain unverified**; adapters are tested with simulated transports. |
+| **Main limitations** | Synthetic data only; local accounts, no SSO; the deterministic checks are string, set and JSON comparisons, not semantic grading; imported backend traces are trusted only as far as their source; Azure files are configuration, not a deployment. |
+
+## Two-minute demo
+
+| Time | Do this | What it shows |
+|---|---|---|
+| 0:00–0:20 | Open http://localhost:3103, keep role **operator** and click **Enter workspace**. Click **New evaluation**, choose **Reference · expected behavior**, label it `Reference v1.0`, **Start evaluation**. | **60/60 passed**, gate **Approved**, and the note *"Automated gate passed. A reviewer still has to record the release approval."* |
+| 0:20–0:40 | Close the run. **New evaluation** again with **Regression · deliberate failures**, label `Candidate v1.1`. | **30/60 passed**, gate **Rejected**, approval blocked. |
+| 0:40–1:00 | In the candidate run, open **case-001**. | *Prompt under test*, the failed **References** check with *"Not allowed: ["missing-document#invented"]"*, the observed output and the expected evidence. |
+| 1:00–1:20 | **Compare versions**: baseline `Reference v1.0`, candidate `Candidate v1.1`, **Compare runs**. | 60 paired cases, **30 regressions**, −50 pp, and the list of regressed cases. |
+| 1:20–1:40 | **Evaluation runs → New evaluation** with the reference outputs and the **Grounding required · LLM required** release policy. | **Inconclusive**: 60 mandatory checks have no result without a LIVE judge; approval is blocked. |
+| 1:40–2:00 | **Sign out**, sign in as **reviewer**, open `Reference v1.0`, **Record approval** with a note, confirm. | *"Release approved by reviewer on …"* with the note. The rejected and inconclusive runs offer no approval button, and the server refuses it. |
+
+## What has been verified and what is pending
+
+Hosted evidence: [GitHub Actions run 42730793669](https://github.com/giovannyTorres/genai-release-lab/actions/runs/42730793669), **2026-11-10 UTC**, completed successfully for PR #2 at head `d46515f`. All three jobs checked out the temporary PR merge `a7771f0`. The [verification record](docs/VERIFICATION.md#hosted-github-actions--2026-11-10-utc) links the individual logs, records the full SHAs and separates this run from the **2026-11-05 local audit (112 backend, 6 frontend)**.
+
+| Capability | Status | Evidence |
+|---|---|---|
+| Docker build and start (`db`, `migrate`, `api`, `worker`, `web`) | Verified in hosted CI | [e2e job](https://github.com/giovannyTorres/genai-release-lab/actions/runs/42730793669/job/129547943551): `docker compose up --build -d --wait` |
+| Demo walkthrough above in a real browser | Verified in hosted CI | Same e2e job: **11 passed**, comprising eight actual-backend scenarios and three mocked browser mode/authentication contracts |
+| Gate decisions, paired comparison, pending checks blocking approval, role enforcement | Verified in hosted CI | [backend job](https://github.com/giovannyTorres/genai-release-lab/actions/runs/42730793669/job/129547943222): **113 passed, 2 opt-in LIVE tests skipped** on PostgreSQL; migrations, Ruff and expected fixture CLI rejection passed |
+| Frontend unit checks and production build | Verified in hosted CI | [web job](https://github.com/giovannyTorres/genai-release-lab/actions/runs/42730793669/job/129547943553): **8 unit tests passed**, ESLint, TypeScript and Next build passed |
+| Failed checks explain the concrete mismatch; approvals visible on the run | Verified | `test_failed_checks_explain_the_concrete_mismatch`, `test_full_persistent_gate_export_and_approval`, frontend unit tests |
+| OpenAI/Gemini adapters and LLM judge | Contract-tested with simulated transports only | `tests/test_providers.py` |
+| Quality of any real model | **Not measured** | Fixture results are workflow tests, not benchmarks |
+| Azure deployment | **Not verified** | Configuration only |
+
+All included cases and responses are original synthetic material; their results are software checks, not model-quality or regulatory-compliance claims. Both OpenAI/Gemini LIVE smokes remained skipped; even a successful connectivity smoke would not be a quality benchmark. The hosted e2e run uploaded no browser evidence artifact because its configured artifact path contained no files; committed screenshots are separate from that run's log evidence.
 
 ## Install and start DEMO
 
@@ -28,7 +66,7 @@ All three local DEMO accounts use password **`demo-release`**:
 
 These public credentials are for the local demonstration. The web port binds to loopback, and permissions are enforced by the backend.
 
-## Try the main workflow in two minutes
+## Main workflow, step by step
 
 1. Sign in as **operator**. Click **New evaluation**, select **Aster assurance suite**, **Deterministic gate** and **Reference · expected behavior**, then start the run. Expect **60/60 passed, Approved**.
 2. Create a second run with **Regression · deliberate failures**. Expect **30/60 passed, Rejected**. Open a failed case to inspect its output, expectation and checks.

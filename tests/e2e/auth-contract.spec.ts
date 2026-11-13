@@ -87,7 +87,7 @@ for (const failure of ["unavailable", "invalid-mode"] as const) {
     );
     await page.getByRole("button", { name: "Enter workspace" }).click();
     await expect(
-      page.getByRole("heading", { name: "Evaluate. Compare. Decide." }),
+      page.getByRole("heading", { name: "Evaluation runs", exact: true }),
     ).toBeVisible();
   });
 }
