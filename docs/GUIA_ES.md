@@ -59,6 +59,8 @@ El resultado esperado es **5 passed**. Reutiliza pruebas existentes de fixtures,
 
 Para la validación completa, el [README](../README.md#full-development-checks) documenta lint, tipos, backend, frontend, build, instalación de Chromium y Playwright. Las pruebas PostgreSQL solo aceptan una base desechable mediante `TEST_DATABASE_URL`, cuyo nombre termina en `_test`; nunca use la base de la aplicación. El [registro de auditoría](audit.md) contiene los comandos aislados y la evidencia de ejecución.
 
+La auditoría local del **2026-11-05** registró **112 pruebas backend y 6 frontend**. Posteriormente, la [ejecución hospedada de GitHub Actions del 2026-11-10 UTC](https://github.com/giovannyTorres/genai-release-lab/actions/runs/42730793669) terminó con los tres trabajos satisfactorios: **113 backend aprobadas y 2 LIVE omitidas, 8 frontend aprobadas y 11 Playwright aprobadas**. Corresponde a la PR #2 con head `d46515f`; Actions probó el merge temporal `a7771f0`. Son ejecuciones distintas: se conservan ambas cifras y sus [enlaces y límites de evidencia](VERIFICATION.md#hosted-github-actions--2026-11-10-utc). Tres pruebas de navegador simulan respuestas de modo/autenticación; ninguna acredita inferencia real. El CI no subió un artefacto de navegador porque la ruta configurada no contenía archivos.
+
 ## LIVE y límites de la demostración
 
 Puede instalar y revisar todo el proyecto sin claves. La [guía de operación](OPERATIONS.md#live-explicit-opt-in) explica la configuración backend y los smoke tests optativos cuando disponga de credenciales. OpenAI y Gemini están implementados con SDK oficiales y transportes simulados; las llamadas reales a modelos siguen pendientes. No hay cambio silencioso a DEMO ante errores.

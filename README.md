@@ -29,17 +29,20 @@
 
 ## What has been verified and what is pending
 
+Hosted evidence: [GitHub Actions run 42730793669](https://github.com/giovannyTorres/genai-release-lab/actions/runs/42730793669), **2026-11-10 UTC**, completed successfully for PR #2 at head `d46515f`. All three jobs checked out the temporary PR merge `a7771f0`. The [verification record](docs/VERIFICATION.md#hosted-github-actions--2026-11-10-utc) links the individual logs, records the full SHAs and separates this run from the **2026-11-05 local audit (112 backend, 6 frontend)**.
+
 | Capability | Status | Evidence |
 |---|---|---|
-| Clean Docker build and start (`db`, `migrate`, `api`, `worker`, `web`) | Verified | Fresh Compose install in an isolated workspace, 2026-11-09 |
-| Demo walkthrough above in a real browser | Verified | Playwright suite (11 flows) against the running containers |
-| Gate decisions, paired comparison, pending checks blocking approval, role enforcement | Verified | 113 backend tests on PostgreSQL (2 opt-in LIVE tests skipped) |
+| Docker build and start (`db`, `migrate`, `api`, `worker`, `web`) | Verified in hosted CI | [e2e job](https://github.com/giovannyTorres/genai-release-lab/actions/runs/42730793669/job/129547943551): `docker compose up --build -d --wait` |
+| Demo walkthrough above in a real browser | Verified in hosted CI | Same e2e job: **11 passed**, comprising eight actual-backend scenarios and three mocked browser mode/authentication contracts |
+| Gate decisions, paired comparison, pending checks blocking approval, role enforcement | Verified in hosted CI | [backend job](https://github.com/giovannyTorres/genai-release-lab/actions/runs/42730793669/job/129547943222): **113 passed, 2 opt-in LIVE tests skipped** on PostgreSQL; migrations, Ruff and expected fixture CLI rejection passed |
+| Frontend unit checks and production build | Verified in hosted CI | [web job](https://github.com/giovannyTorres/genai-release-lab/actions/runs/42730793669/job/129547943553): **8 unit tests passed**, ESLint, TypeScript and Next build passed |
 | Failed checks explain the concrete mismatch; approvals visible on the run | Verified | `test_failed_checks_explain_the_concrete_mismatch`, `test_full_persistent_gate_export_and_approval`, frontend unit tests |
 | OpenAI/Gemini adapters and LLM judge | Contract-tested with simulated transports only | `tests/test_providers.py` |
 | Quality of any real model | **Not measured** | Fixture results are workflow tests, not benchmarks |
 | Azure deployment | **Not verified** | Configuration only |
 
-All included cases and responses are original synthetic material; their results are software checks, not model-quality or regulatory-compliance claims.
+All included cases and responses are original synthetic material; their results are software checks, not model-quality or regulatory-compliance claims. Both OpenAI/Gemini LIVE smokes remained skipped; even a successful connectivity smoke would not be a quality benchmark. The hosted e2e run uploaded no browser evidence artifact because its configured artifact path contained no files; committed screenshots are separate from that run's log evidence.
 
 ## Install and start DEMO
 

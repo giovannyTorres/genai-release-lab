@@ -25,7 +25,7 @@ The optional override mounts the combined `/etc/ssl/certs/ca-certificates.crt` (
 5. Configure `require_llm: true`, a rubric, rubric_version, provider and model to enable the optional structured judge. Without credentials, imported outputs still run deterministic checks but remain inconclusive when the judge is mandatory. DEMO always leaves the judge pending regardless of environment keys.
 6. Optional registered endpoint: set `ENDPOINT_ALLOWED_HOSTS=your.public.example`, then authenticated operator POST `/api/endpoints` with `{name,url}`. Exact HTTPS hosts on port443 only. DNS must contain exclusively globally routable addresses. Each invocation revalidates and pins a resolved IP with original TLS SNI and Host. Redirects, private/mapped networks and responses over256KB are blocked. Endpoint receives `{case_id,prompt,context}` and must return the Output JSON schema in OpenAPI. No per-endpoint authentication is currently supported; deploy a narrowly accessible evaluation endpoint or extend explicit credential references before connecting a protected service.
 
-Real smoke commands (may incur provider charges; **not run during construction**):
+Real smoke commands (may incur provider charges; **not run during construction and both skipped in the recorded 2026-11-10 hosted CI run**; see [verification evidence](VERIFICATION.md#hosted-github-actions--2026-11-10-utc)):
 
 ```bash
 RUN_LIVE=1 uv run pytest -q -m live tests/test_live.py -k openai
@@ -34,7 +34,7 @@ RUN_LIVE=1 uv run pytest -q -m live tests/test_live.py -k gemini
 
 Request controls: `MODEL_TIMEOUT_SECONDS` (1–25 seconds per attempt), `MODEL_MAX_OUTPUT_TOKENS` (1–8192), `MODEL_MAX_RETRIES` (0–1), and `MODEL_CONCURRENCY` (default2). An overall55-second deadline bounds each structured request; no unbounded retries. Only structured generation is exposed because this product does not need tool execution or token streaming.
 
-Provider models can change availability. `LIVE_SMOKE_MODEL` overrides the test model for the selected provider. Normal tests use simulated transports and skip these tests. No external credentials are needed by CI.
+Provider models can change availability. `LIVE_SMOKE_MODEL` overrides the test model for the selected provider. Normal tests use simulated transports and skip these tests. No external credentials are needed by CI. These smokes check connectivity and a structured response only; model quality needs a separate evaluation using real outputs and a suitable dataset and rubric.
 
 ## Azure Container Apps configuration
 
